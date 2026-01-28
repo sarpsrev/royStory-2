@@ -1,0 +1,61 @@
+{
+  "name": "html5-playable-ad",
+  "version": "1.0.0",
+  "description": "A template for creating HTML5 playable ads with Pixi.js, Webpack, and MRAID support.",
+  "main": "./src/index.js",
+  "scripts": {
+    "start": "webpack serve --config webpack.dev.js",
+    "build": "cross-env NODE_ENV=production webpack --config webpack.prod.js && node scripts/exportStorage.js && node scripts/createInspector.js",
+    "build:fill-ai-descriptions": "npm run build && node scripts/fillAiDescriptions.js",
+    "dev": "cross-env NODE_ENV=development webpack serve --config webpack.dev.js",
+    "serve": "npx http-server dist",
+    "export-storage": "node scripts/exportStorage.js",
+    "setup-datajs-doc": "code --install-extension .vscode-extensions/datajs-doc-popup-0.0.1.vsix"
+  },
+  "dependencies": {
+    "@pixi-spine/all-4.1": "^4.0.4",
+    "@pixi/particle-emitter": "^5.0.8",
+    "cannon-es": "^0.20.0",
+    "css-minimizer-webpack-plugin": "^7.0.0",
+    "fontfaceobserver": "^2.3.0",
+    "gsap": "^3.12.5",
+    "howler": "^2.2.4",
+    "ignore-webpack-plugin": "^0.3.0",
+    "matter-js": "^0.20.0",
+    "module-alias": "^2.2.3",
+    "pixi.js": "6.5.10",
+    "poly-decomp": "^0.3.0",
+    "terser-webpack-plugin": "^5.3.11",
+    "three": "^0.171.0",
+    "three.quarks": "^0.15.5",
+    "webpack-bundle-analyzer": "^4.10.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@toon-format/toon": "^2.1.0",
+    "babel-loader": "^9.2.1",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "compression-webpack-plugin": "^11.1.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.11.0",
+    "file-loader": "^6.2.0",
+    "filemanager-webpack-plugin": "^8.0.0",
+    "html-inline-css-webpack-plugin": "^1.11.2",
+    "html-inline-script-webpack-plugin": "^3.2.1",
+    "html-loader": "^5.1.0",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^3.3.4",
+    "url-loader": "^4.1.1",
+    "vite": "^6.1.0",
+    "vite-plugin-html": "^3.2.2",
+    "vite-plugin-singlefile": "^2.1.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2"
+  },
+  "_moduleAliases": {
+    "@assets": "./assets"
+  }
+}

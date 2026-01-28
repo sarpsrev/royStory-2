@@ -1,0 +1,139 @@
+{
+  "version": "1.0",
+  "autoDestroy": false,
+  "looping": true,
+  "duration": 1,
+  "shape": {
+    "type": "sphere",
+    "radius": 0.2,
+    "arc": 6.283185307179586,
+    "thickness": 1
+  },
+  "startLife": {
+    "type": "IntervalValue",
+    "a": 1,
+    "b": 1.2
+  },
+  "startSpeed": {
+    "type": "IntervalValue",
+    "a": 0,
+    "b": 0.5
+  },
+  "startRotation": {
+    "type": "IntervalValue",
+    "a": 0,
+    "b": 360
+  },
+  "startSize": {
+    "type": "IntervalValue",
+    "a": 1,
+    "b": 2
+  },
+  "startColor": {
+    "type": "ColorRange",
+    "a": {
+      "r": 0.98,
+      "g": 0.76,
+      "b": 0.51,
+      "a": 0.48
+    },
+    "b": {
+      "r": 1.0,
+      "g": 0.83,
+      "b": 0.45,
+      "a": 0.47
+    }
+  },
+  "emissionOverTime": {
+    "type": "ConstantValue",
+    "value": 100
+  },
+  "emissionOverDistance": {
+    "type": "ConstantValue",
+    "value": 0
+  },
+  "emissionBursts": [],
+  "onlyUsedByOther": false,
+  "renderOrder": 4,
+  "renderMode": 0,
+  "blending": 2,
+  "behaviors": [
+    {
+      "type": "ColorOverLife",
+      "color": {
+        "type": "Gradient",
+        "functions": [
+          {
+            "function": {
+              "type": "ColorRange",
+              "a": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0
+              },
+              "b": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            },
+            "start": 0
+          },
+          {
+            "function": {
+              "type": "ColorRange",
+              "a": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "b": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0
+              }
+            },
+            "start": 0.139
+          }
+        ]
+      }
+    },
+    {
+      "type": "SizeOverLife",
+      "size": {
+        "type": "PiecewiseBezier",
+        "functions": [
+          {
+            "function": {
+              "p0": 0.77,
+              "p1": 0.98,
+              "p2": 0.78,
+              "p3": 0.24
+            },
+            "start": 0
+          }
+        ]
+      }
+    },
+    {
+      "type": "ApplyForce",
+      "direction": [0, 2, 0],
+      "magnitude": {
+        "type": "ConstantValue",
+        "value": 2
+      }
+    },
+    {
+      "type": "TurbulenceField",
+      "scale": [2, 2, 2],
+      "octaves": 15,
+      "velocityMultiplier": [2, 0, 2],
+      "timeScale": [2, 2, 2]
+    }
+  ],
+  "worldSpace": true
+}

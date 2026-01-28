@@ -1,0 +1,287 @@
+{
+  "skeleton": {
+    "hash": "OBSPc0+Le/8",
+    "spine": "4.1-from-4.2.43",
+    "x": -256,
+    "y": -256,
+    "width": 551.15,
+    "height": 512,
+    "images": "./basket - Kopya/",
+    "audio": "./audio"
+  },
+  "bones": [{ "name": "root" }],
+  "slots": [
+    { "name": "basket_sh", "bone": "root", "attachment": "basket_sh" },
+    { "name": "basket (1)", "bone": "root", "attachment": "basket (1)" },
+    { "name": "basket (2)", "bone": "root", "attachment": "basket (2)" },
+    { "name": "basket (3)", "bone": "root", "attachment": "basket (3)" },
+    { "name": "basket (4)", "bone": "root", "attachment": "basket (4)" },
+    { "name": "basket (5)", "bone": "root", "attachment": "basket (5)" },
+    { "name": "basket (6)", "bone": "root", "attachment": "basket (6)" },
+    { "name": "basket (7)", "bone": "root", "attachment": "basket (7)" },
+    { "name": "basket (8)", "bone": "root", "attachment": "basket (8)" },
+    { "name": "basket (9)", "bone": "root", "attachment": "basket (9)" },
+    { "name": "basket (10)", "bone": "root", "attachment": "basket (10)" },
+    { "name": "basket (11)", "bone": "root", "attachment": "basket (11)" },
+    { "name": "basket (12)", "bone": "root", "attachment": "basket (12)" },
+    { "name": "basket (13)", "bone": "root", "attachment": "basket (13)" },
+    { "name": "basket (14)", "bone": "root", "attachment": "basket (14)" },
+    { "name": "basket (15)", "bone": "root", "attachment": "basket (15)" },
+    { "name": "basket (16)", "bone": "root", "attachment": "basket (16)" },
+    { "name": "basket (17)", "bone": "root", "attachment": "basket (17)" },
+    { "name": "basket (18)", "bone": "root", "attachment": "basket (18)" },
+    { "name": "basket (19)", "bone": "root", "attachment": "basket (19)" },
+    { "name": "basket (20)", "bone": "root", "attachment": "basket (20)" },
+    { "name": "basket (21)", "bone": "root", "attachment": "basket (21)" },
+    { "name": "basket (22)", "bone": "root", "attachment": "basket (22)" },
+    { "name": "basket (23)", "bone": "root", "attachment": "basket (23)" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "basket (1)": { "basket (1)": { "width": 512, "height": 512 } },
+        "basket (2)": { "basket (2)": { "width": 512, "height": 512 } },
+        "basket (3)": { "basket (3)": { "width": 512, "height": 512 } },
+        "basket (4)": { "basket (4)": { "width": 512, "height": 512 } },
+        "basket (5)": { "basket (5)": { "width": 512, "height": 512 } },
+        "basket (6)": { "basket (6)": { "width": 512, "height": 512 } },
+        "basket (7)": { "basket (7)": { "width": 512, "height": 512 } },
+        "basket (8)": { "basket (8)": { "width": 512, "height": 512 } },
+        "basket (9)": { "basket (9)": { "width": 512, "height": 512 } },
+        "basket (10)": { "basket (10)": { "width": 512, "height": 512 } },
+        "basket (11)": { "basket (11)": { "width": 512, "height": 512 } },
+        "basket (12)": { "basket (12)": { "width": 512, "height": 512 } },
+        "basket (13)": { "basket (13)": { "width": 512, "height": 512 } },
+        "basket (14)": { "basket (14)": { "width": 512, "height": 512 } },
+        "basket (15)": { "basket (15)": { "width": 512, "height": 512 } },
+        "basket (16)": { "basket (16)": { "width": 512, "height": 512 } },
+        "basket (17)": { "basket (17)": { "width": 512, "height": 512 } },
+        "basket (18)": { "basket (18)": { "width": 512, "height": 512 } },
+        "basket (19)": { "basket (19)": { "width": 512, "height": 512 } },
+        "basket (20)": { "basket (20)": { "width": 512, "height": 512 } },
+        "basket (21)": { "basket (21)": { "width": 512, "height": 512 } },
+        "basket (22)": { "basket (22)": { "width": 512, "height": 512 } },
+        "basket (23)": { "basket (23)": { "width": 512, "height": 512 } },
+        "basket_sh": {
+          "basket_sh": {
+            "x": 61.15,
+            "y": -88.51,
+            "scaleX": 6,
+            "scaleY": 6,
+            "width": 78,
+            "height": 25
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "animation": {
+      "slots": {
+        "basket (1)": {
+          "attachment": [
+            { "time": 0.0667 },
+            { "time": 2.9333, "name": "basket (1)" }
+          ]
+        },
+        "basket (2)": {
+          "attachment": [
+            {},
+            { "time": 0.0667, "name": "basket (2)" },
+            { "time": 0.1333 },
+            { "time": 2.8667, "name": "basket (2)" },
+            { "time": 2.9333 }
+          ]
+        },
+        "basket (3)": {
+          "attachment": [
+            {},
+            { "time": 0.1333, "name": "basket (3)" },
+            { "time": 0.2 },
+            { "time": 2.8, "name": "basket (3)" },
+            { "time": 2.8667 }
+          ]
+        },
+        "basket (4)": {
+          "attachment": [
+            {},
+            { "time": 0.2, "name": "basket (4)" },
+            { "time": 0.2667 },
+            { "time": 2.7333, "name": "basket (4)" },
+            { "time": 2.8 }
+          ]
+        },
+        "basket (5)": {
+          "attachment": [
+            {},
+            { "time": 0.2667, "name": "basket (5)" },
+            { "time": 0.3333 },
+            { "time": 2.6667, "name": "basket (5)" },
+            { "time": 2.7333 }
+          ]
+        },
+        "basket (6)": {
+          "attachment": [
+            {},
+            { "time": 0.3333, "name": "basket (6)" },
+            { "time": 0.4 },
+            { "time": 2.6, "name": "basket (6)" },
+            { "time": 2.6667 }
+          ]
+        },
+        "basket (7)": {
+          "attachment": [
+            {},
+            { "time": 0.4, "name": "basket (7)" },
+            { "time": 0.4667 },
+            { "time": 2.5333, "name": "basket (7)" },
+            { "time": 2.6 }
+          ]
+        },
+        "basket (8)": {
+          "attachment": [
+            {},
+            { "time": 0.4667, "name": "basket (8)" },
+            { "time": 0.5333 },
+            { "time": 2.4667, "name": "basket (8)" },
+            { "time": 2.5333 }
+          ]
+        },
+        "basket (9)": {
+          "attachment": [
+            {},
+            { "time": 0.5333, "name": "basket (9)" },
+            { "time": 0.6 },
+            { "time": 2.4, "name": "basket (9)" },
+            { "time": 2.4667 }
+          ]
+        },
+        "basket (10)": {
+          "attachment": [
+            {},
+            { "time": 0.6, "name": "basket (10)" },
+            { "time": 0.6667 },
+            { "time": 2.3333, "name": "basket (10)" },
+            { "time": 2.4 }
+          ]
+        },
+        "basket (11)": {
+          "attachment": [
+            {},
+            { "time": 0.6667, "name": "basket (11)" },
+            { "time": 0.7333 },
+            { "time": 2.2667, "name": "basket (11)" },
+            { "time": 2.3333 }
+          ]
+        },
+        "basket (12)": {
+          "attachment": [
+            {},
+            { "time": 0.7333, "name": "basket (12)" },
+            { "time": 0.8 },
+            { "time": 2.2, "name": "basket (12)" },
+            { "time": 2.2667 }
+          ]
+        },
+        "basket (13)": {
+          "attachment": [
+            {},
+            { "time": 0.8, "name": "basket (13)" },
+            { "time": 0.8667 },
+            { "time": 2.1333, "name": "basket (13)" },
+            { "time": 2.2 }
+          ]
+        },
+        "basket (14)": {
+          "attachment": [
+            {},
+            { "time": 0.8667, "name": "basket (14)" },
+            { "time": 0.9333 },
+            { "time": 2.0667, "name": "basket (14)" },
+            { "time": 2.1333 }
+          ]
+        },
+        "basket (15)": {
+          "attachment": [
+            {},
+            { "time": 0.9333, "name": "basket (15)" },
+            { "time": 1 },
+            { "time": 2, "name": "basket (15)" },
+            { "time": 2.0667 }
+          ]
+        },
+        "basket (16)": {
+          "attachment": [
+            {},
+            { "time": 1, "name": "basket (16)" },
+            { "time": 1.0667 },
+            { "time": 1.9333, "name": "basket (16)" },
+            { "time": 2 }
+          ]
+        },
+        "basket (17)": {
+          "attachment": [
+            {},
+            { "time": 1.0667, "name": "basket (17)" },
+            { "time": 1.1333 },
+            { "time": 1.8667, "name": "basket (17)" },
+            { "time": 1.9333 }
+          ]
+        },
+        "basket (18)": {
+          "attachment": [
+            {},
+            { "time": 1.1333, "name": "basket (18)" },
+            { "time": 1.2 },
+            { "time": 1.8, "name": "basket (18)" },
+            { "time": 1.8667 }
+          ]
+        },
+        "basket (19)": {
+          "attachment": [
+            {},
+            { "time": 1.2, "name": "basket (19)" },
+            { "time": 1.2667 },
+            { "time": 1.7333, "name": "basket (19)" },
+            { "time": 1.8 }
+          ]
+        },
+        "basket (20)": {
+          "attachment": [
+            {},
+            { "time": 1.2667, "name": "basket (20)" },
+            { "time": 1.3333 },
+            { "time": 1.6667, "name": "basket (20)" },
+            { "time": 1.7333 }
+          ]
+        },
+        "basket (21)": {
+          "attachment": [
+            {},
+            { "time": 1.3333, "name": "basket (21)" },
+            { "time": 1.4 },
+            { "time": 1.6, "name": "basket (21)" },
+            { "time": 1.6667 }
+          ]
+        },
+        "basket (22)": {
+          "attachment": [
+            {},
+            { "time": 1.4, "name": "basket (22)" },
+            { "time": 1.4667 },
+            { "time": 1.5333, "name": "basket (22)" },
+            { "time": 1.6 }
+          ]
+        },
+        "basket (23)": {
+          "attachment": [
+            {},
+            { "time": 1.4667, "name": "basket (23)" },
+            { "time": 1.5333 }
+          ]
+        }
+      }
+    }
+  }
+}

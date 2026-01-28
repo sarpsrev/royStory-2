@@ -1,0 +1,13 @@
+Analog_Spine.png
+size:836,555
+filter:Linear,Linear
+pma:true
+Images/Joystick_Outside
+bounds:478,250,303,303
+Images/Joystik_Inside
+bounds:716,130,118,118
+Images/Trail
+bounds:478,2,236,246
+offsets:5,3,256,256
+Images/Tut_Hand
+bounds:2,58,474,495
