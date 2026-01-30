@@ -1,9 +1,9 @@
-import { ThreeRenderer } from "./ThreeRenderer";
-import { PixiRenderer } from "./PixiRenderer";
-import AudioManager from "../audio/AudioManager";
-import globals from "../../globals";
-import data from "../../src/config/data";
-import { openStorePage } from "..";
+import { ThreeRenderer } from './ThreeRenderer';
+import { PixiRenderer } from './PixiRenderer';
+import AudioManager from '../audio/AudioManager';
+import globals from '../../globals';
+import data from '../../src/config/data';
+import { openStorePage } from '..';
 
 export class RenderManager {
   constructor(width, height) {
@@ -17,20 +17,25 @@ export class RenderManager {
     this.pixiRenderer = new PixiRenderer(width, height);
 
     // Create container div for both renderers
-    this.container = document.createElement("div");
-    this.container.style.position = "relative";
-    this.container.style.width = "100%";
-    this.container.style.height = "100%";
+    this.container = document.createElement('div');
+    this.container.style.position = 'relative';
+    this.container.style.width = '100%';
+    this.container.style.height = '100%';
 
     // Add renderers to container
     this.threeRenderer && this.container.appendChild(this.threeRenderer.view);
     this.container.appendChild(this.pixiRenderer.view);
 
-    this.pixiRenderer.container.once("pointerdown", () => {
+    this.pixiRenderer.container.once('pointerdown', () => {
       if (data.marketRedirectAfterXseconds != 0) {
         this.marketRedirectTimer = setTimeout(() => {
           openStorePage();
         }, data.marketRedirectAfterXseconds * 1000);
+      }
+      if (data.secondsOnXsecondsToEndCard != 0) {
+        this.marketRedirectTimer = setTimeout(() => {
+          globals.EventEmitter.emit('gameFinished', false);
+        }, data.secondsOnXsecondsToEndCard * 1000);
       }
     });
   }

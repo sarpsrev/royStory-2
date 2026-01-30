@@ -6,6 +6,7 @@ import * as Particles from '@pixi/particle-emitter';
 import Container2 from '../../config/Container2';
 import AudioManager from '../../../engine/audio/AudioManager';
 import { openStorePage } from '../../../engine';
+import { ParticleContainer } from 'pixi.js';
 import { Spine } from '@pixi-spine/all-4.1';
 // import {
 //   EXPLOSION_SCALE,
@@ -32,6 +33,7 @@ export default class MatchBoard {
     this.columns = columns;
 
     this.start();
+    this.userMatchCount = 0;
 
     this.physicsDebugEnabled = globals.pixiGame.physicsDebugEnabled;
   }
@@ -41,6 +43,55 @@ export default class MatchBoard {
   start() {
     this.setBoardData();
     this.createBoard();
+    this.scheduleTutorialAfterDelay(2);
+  }
+
+  /**
+   * Fade out the tutorial hand with animation
+   */
+  fadeTutorialOut() {
+    if (!this.hand) return;
+
+    // Kill any existing tutorial delayed call
+    if (this.tutorialDelayedCall) {
+      this.tutorialDelayedCall.kill();
+      this.tutorialDelayedCall = null;
+    }
+
+    gsap.killTweensOf(this.hand);
+    gsap.to(this.hand, {
+      alpha: 0,
+      duration: 0.3,
+      onComplete: () => {
+        if (this.hand) {
+          this.parentObj.removeChild(this.hand);
+          this.hand = null;
+        }
+      },
+    });
+  }
+
+  /**
+   * Schedule a new tutorial to appear after delay (if no match is made)
+   * @param {number} delay - Delay in seconds before showing tutorial
+   */
+  scheduleTutorialAfterDelay(delay = 1) {
+    // Kill any existing delayed call
+    if (this.tutorialDelayedCall) {
+      this.tutorialDelayedCall.kill();
+    }
+
+    this.tutorialDelayedCall = gsap.delayedCall(delay, () => {
+      this.showDynamicTutorial();
+    });
+  }
+
+  /**
+   * Called when a match is made - fades out tutorial and schedules new one
+   */
+  onMatchMade() {
+    this.fadeTutorialOut();
+    this.scheduleTutorialAfterDelay(data.handRespawnTime);
   }
 
   setBoardData() {
@@ -87,17 +138,32 @@ export default class MatchBoard {
         tileBack.i = i;
         tileBack.j = j;
 
+        // Color mapping for tile asset names to hex colors
+        const colorMap = {
+          orange: '#FFA500',
+          yellow: '#FFFF00',
+          red: '#FF0000',
+          purple: '#800080',
+          blue: '#0000FF',
+          green: '#00FF00',
+          pink: '#FFC0CB',
+          white: '#FFFFFF',
+          black: '#000000',
+          X: '#FF0000', // bomb color
+        };
+
         let tileSprite = new PIXI.Sprite(TextureCache[this.boardData[j][i]]);
         tileSprite.anchor.set(0.5);
 
         let tileSpriteRatio =
           tileSize / Math.max(tileSprite.width, tileSprite.height);
-        tileSprite.scale.set(tileSpriteRatio * 1);
+        tileSprite.scale.set(tileSpriteRatio * data.tileScale);
 
         this.parentObj.addChild(tileSprite);
         tileSprite.x = tileBack.x;
         tileSprite.y = tileBack.y;
         tileSprite.typeIndex = this.boardData[j][i];
+        tileSprite.color = colorMap[this.boardData[j][i]] || '#FFFFFF'; // Store hex color based on asset name
 
         tileBack.tileSprite = tileSprite;
         tileSprite.zIndex = 3.2; // Above tile backgrounds
@@ -188,6 +254,7 @@ export default class MatchBoard {
               }
 
               console.log('Detected swipe direction:', direction);
+              AudioManager.playSFX('swipeSound');
 
               // find the tile to swap with
               let indexI = this.selectedTile.i;
@@ -228,7 +295,117 @@ export default class MatchBoard {
         });
       }
     }
+
+    // Create border around the board
+    //this.createBorder();
   }
+
+  /**
+   * Create border sprites around the board
+   */
+  createBorder() {
+    const tileSize = 52;
+    const borderSize = tileSize * 1.3; // Border sprite size
+
+    // Calculate board bounds
+    const boardLeft = this.xPos + -120;
+    const boardRight = this.xPos + (-120 + (this.columns - 1) * tileSize);
+    const boardTop = this.yPos + (460 - 580);
+    const boardBottom = this.yPos + (460 - 580 + (this.rows - 1) * tileSize);
+
+    // Helper to create a border sprite
+    const createBorderSprite = (
+      textureKey,
+      x,
+      y,
+      width = borderSize,
+      height = borderSize,
+    ) => {
+      const texture = TextureCache[textureKey];
+      if (!texture) {
+        console.warn(`Border texture not found: ${textureKey}`);
+        return null;
+      }
+      const sprite = new PIXI.Sprite(texture);
+      sprite.anchor.set(0.5);
+      sprite.width = width;
+      sprite.height = height;
+      sprite.x = x;
+      sprite.y = y;
+      sprite.zIndex = 3.05; // Below tile backgrounds but visible
+      sprite.eventMode = 'none';
+      this.parentObj.addChild(sprite);
+      return sprite;
+    };
+
+    // Top edge - use "down" texture (faces down toward board)
+    // Skip first and last positions for corners
+    for (let i = 1; i < this.columns - 1; i++) {
+      const x = this.xPos + (-120 + i * tileSize);
+      const y = boardTop - borderSize;
+      createBorderSprite('down', x, y);
+    }
+
+    // Bottom edge - use "up" texture (faces up toward board)
+    // Skip first and last positions for corners
+    for (let i = 1; i < this.columns - 1; i++) {
+      const x = this.xPos + (-120 + i * tileSize);
+      const y = boardBottom + borderSize;
+      createBorderSprite('up', x, y);
+    }
+
+    // Left edge - use "right" texture (faces right toward board)
+    // Skip first and last positions for corners
+    for (let j = 1; j < this.rows - 1; j++) {
+      const x = boardLeft - borderSize;
+      const y = this.yPos + (460 - 580 + j * tileSize);
+      createBorderSprite('right', x, y);
+    }
+
+    // Right edge - use "left" texture (faces left toward board)
+    // Skip first and last positions for corners
+    for (let j = 1; j < this.rows - 1; j++) {
+      const x = boardRight + borderSize;
+      const y = this.yPos + (460 - 580 + j * tileSize);
+      createBorderSprite('left', x, y);
+    }
+
+    // Corners - use corner textures facing toward the board (rotated 180 degrees)
+    const cornerOffset = borderSize / 6;
+
+    // Top-left corner
+    const topLeftCorner = createBorderSprite(
+      'lowerRight',
+      boardLeft - cornerOffset,
+      boardTop - cornerOffset,
+    );
+    if (topLeftCorner) topLeftCorner.rotation = Math.PI;
+
+    // Top-right corner
+    const topRightCorner = createBorderSprite(
+      'lowerLeft',
+      boardRight + cornerOffset,
+      boardTop - cornerOffset,
+    );
+    if (topRightCorner) topRightCorner.rotation = Math.PI;
+
+    // Bottom-left corner
+    const bottomLeftCorner = createBorderSprite(
+      'upperRight',
+      boardLeft - cornerOffset,
+      boardBottom + cornerOffset,
+    );
+    if (bottomLeftCorner) bottomLeftCorner.rotation = Math.PI;
+
+    // Bottom-right corner
+    const bottomRightCorner = createBorderSprite(
+      'upperLeft',
+      boardRight + cornerOffset,
+      boardBottom + cornerOffset,
+    );
+    if (bottomRightCorner) bottomRightCorner.rotation = Math.PI;
+  }
+
   lastClickLedToSwap = false;
 
   firstSwapMade = false;
@@ -392,7 +569,6 @@ export default class MatchBoard {
         // }
 
         this.swapCountToMarketChecker();
-
         // if no matches found, swap back
         if (
           this.swapTile.tileSprite.isBomb ||
@@ -432,10 +608,13 @@ export default class MatchBoard {
 
           AudioManager.playSFX('tileMatchSound');
 
+          // Fade out tutorial and schedule new one after 1 second
+          this.onMatchMade();
+
           this.matchedTiles.forEach((element) => {
             // matchedTile
             element.matched = true;
-
+            console.log(element);
             gsap.to(element.tileSprite.scale, {
               x: 0,
               y: 0,
@@ -453,7 +632,10 @@ export default class MatchBoard {
             globals.pixiGame.matter.removeBody(element.body);
             element.body = null;
 
-            // this.particle2(element);
+            //this.particle();
+            this.particle2(element, element.tileSprite.color);
+
+            AudioManager.playSFX('matchSound');
           });
 
           this.matchCountToMarketChecker();
@@ -463,38 +645,18 @@ export default class MatchBoard {
   }
 
   matchCountToMarketChecker() {
-    // Hide speech bubble on first match
-    if (globals.pixiGame && globals.pixiGame.hideSpeechBubble) {
-      globals.pixiGame.hideSpeechBubble();
-    }
-
     if (data.xBoardMatchesToMarket > 0) {
-      globals.matchedCount++;
-
-      if (globals.matchedCount >= data.xBoardMatchesToMarket) {
+      this.userMatchCount++;
+      console.log(this.userMatchCount);
+      if (this.userMatchCount >= data.xBoardMatchesToMarket) {
         openStorePage();
       }
     }
-
-    // Check if we should go to endcard after X matches in level 2
-    if (data.goToEndcardAfterXMatchesInLevel2 > 0 && this.boardIndex === 2) {
-      if (!this.level2MatchCount) this.level2MatchCount = 0;
-      this.level2MatchCount++;
-
-      if (this.level2MatchCount >= data.goToEndcardAfterXMatchesInLevel2) {
-        openStorePage();
-        globals.EventEmitter.emit('gameFinished', true, false); // skip badge
-      }
-    }
-
-    // Check if we should go to endcard after X matches in level 3
-    if (data.goToEndcardAfterXMatchesInLevel3 > 0 && this.boardIndex === 3) {
-      if (!this.level3MatchCount) this.level3MatchCount = 0;
-      this.level3MatchCount++;
-
-      if (this.level3MatchCount >= data.goToEndcardAfterXMatchesInLevel3) {
-        openStorePage();
-        globals.EventEmitter.emit('gameFinished', true);
+    if (data.xBoardMatchesToEndCard > 0) {
+      this.userMatchCount++;
+      console.log(this.userMatchCount);
+      if (this.userMatchCount >= data.xBoardMatchesToEndCard) {
+        globals.EventEmitter.emit('gameFinished', false);
       }
     }
   }
@@ -508,16 +670,16 @@ export default class MatchBoard {
     }
   }
 
-  particle2(tileBack) {
-    const innerSize = 8;
-    const outerSize = 14;
-    const maxScale = 0.15;
-    const minScale = 0.1;
+  particle2(tileBack, color) {
+    const innerSize = 11;
+    const outerSize = 22;
+    const maxScale = 0.3;
+    const minScale = 0.15;
     const maxParticles = 8;
     const frequency = 0.0015;
     const lifetime = {
-      min: 1,
-      max: 1,
+      min: 0.8,
+      max: 0.8,
     };
     const parent = globals.pixiScene;
     const cont = new PIXI.Container();
@@ -533,7 +695,7 @@ export default class MatchBoard {
       frequency: frequency,
       spawnChance: 1,
       particlesPerWave: 1,
-      emitterLifetime: 0.6,
+      emitterLifetime: 0.2,
       maxParticles: maxParticles,
       pos: {
         x: 0,
@@ -551,8 +713,8 @@ export default class MatchBoard {
                   time: 0,
                 },
                 {
-                  value: 0,
-                  time: 0.8,
+                  value: 1,
+                  time: 0.6,
                 },
                 {
                   value: 0,
@@ -582,8 +744,7 @@ export default class MatchBoard {
         {
           type: 'colorStatic',
           config: {
-            // from 0xffffff to #ffffff format (data.tileBreakParticleColor)
-            color: PIXI.utils.hex2string(data.tileBreakParticlesColor),
+            color: color,
           },
         },
         {
@@ -591,11 +752,11 @@ export default class MatchBoard {
           config: {
             accel: {
               x: 0,
-              y: 600,
+              y: 3000,
             },
             // maxSpeed: 1000,
-            minStart: 250,
-            maxStart: 250,
+            minStart: 400,
+            maxStart: 400,
             rotate: true,
           },
         },
@@ -609,7 +770,7 @@ export default class MatchBoard {
         {
           type: 'spawnShape',
           config: {
-            type: 'circle',
+            type: 'torus',
             data: {
               x: -innerSize * 0.5,
               y: 0,
@@ -620,9 +781,9 @@ export default class MatchBoard {
           },
         },
         {
-          type: 'textureRandom',
+          type: 'textureSingle',
           config: {
-            textures: [TextureCache['particle1'], TextureCache['particle2']],
+            texture: TextureCache['particle1'],
           },
         },
       ],
@@ -631,6 +792,283 @@ export default class MatchBoard {
     emitter.emit = true;
     this.particleCont = cont;
     cont.emitter = emitter;
+  }
+
+  /**
+   * Find all possible moves that would create a match-3
+   * @returns {Array} Array of possible moves: { tile1: {i, j}, tile2: {i, j}, direction, matchCount }
+   */
+  findAllPossibleMoves() {
+    const possibleMoves = [];
+
+    const getTileType = (col, row) => {
+      if (col < 0 || col >= this.columns || row < 0 || row >= this.rows)
+        return null;
+      const tile = this.tiles[col]?.[row];
+      if (!tile || tile.matched) return null;
+      return tile.tileSprite?.typeIndex || null;
+    };
+
+    // Check if swapping (col1,row1) with (col2,row2) creates a match
+    const checkSwapCreatesMatch = (col1, row1, col2, row2) => {
+      // Temporarily swap
+      const type1 = getTileType(col1, row1);
+      const type2 = getTileType(col2, row2);
+      if (!type1 || !type2) return 0;
+
+      // Create a virtual board state
+      const getTypeAt = (c, r) => {
+        if (c === col1 && r === row1) return type2;
+        if (c === col2 && r === row2) return type1;
+        return getTileType(c, r);
+      };
+
+      let matchCount = 0;
+
+      // Check matches for position (col1, row1) after swap (now has type2)
+      // Horizontal
+      let hCount1 = 1;
+      for (let c = col1 - 1; c >= 0 && getTypeAt(c, row1) === type2; c--)
+        hCount1++;
+      for (
+        let c = col1 + 1;
+        c < this.columns && getTypeAt(c, row1) === type2;
+        c++
+      )
+        hCount1++;
+      if (hCount1 >= 3) matchCount += hCount1;
+
+      // Vertical
+      let vCount1 = 1;
+      for (let r = row1 - 1; r >= 0 && getTypeAt(col1, r) === type2; r--)
+        vCount1++;
+      for (let r = row1 + 1; r < this.rows && getTypeAt(col1, r) === type2; r++)
+        vCount1++;
+      if (vCount1 >= 3) matchCount += vCount1;
+
+      // Check matches for position (col2, row2) after swap (now has type1)
+      // Horizontal
+      let hCount2 = 1;
+      for (let c = col2 - 1; c >= 0 && getTypeAt(c, row2) === type1; c--)
+        hCount2++;
+      for (
+        let c = col2 + 1;
+        c < this.columns && getTypeAt(c, row2) === type1;
+        c++
+      )
+        hCount2++;
+      if (hCount2 >= 3) matchCount += hCount2;
+
+      // Vertical
+      let vCount2 = 1;
+      for (let r = row2 - 1; r >= 0 && getTypeAt(col2, r) === type1; r--)
+        vCount2++;
+      for (let r = row2 + 1; r < this.rows && getTypeAt(col2, r) === type1; r++)
+        vCount2++;
+      if (vCount2 >= 3) matchCount += vCount2;
+
+      return matchCount;
+    };
+
+    // Scan all tiles
+    for (let col = 0; col < this.columns; col++) {
+      for (let row = 0; row < this.rows; row++) {
+        const tile = this.tiles[col]?.[row];
+        if (!tile || tile.matched) continue;
+
+        // Check swap right
+        if (col < this.columns - 1) {
+          const matchCount = checkSwapCreatesMatch(col, row, col + 1, row);
+          if (matchCount > 0) {
+            possibleMoves.push({
+              tile1: { i: col, j: row },
+              tile2: { i: col + 1, j: row },
+              direction: 'right',
+              matchCount,
+              avgY: (this.tiles[col][row].y + this.tiles[col + 1][row].y) / 2,
+            });
+          }
+        }
+
+        // Check swap down
+        if (row < this.rows - 1) {
+          const matchCount = checkSwapCreatesMatch(col, row, col, row + 1);
+          if (matchCount > 0) {
+            possibleMoves.push({
+              tile1: { i: col, j: row },
+              tile2: { i: col, j: row + 1 },
+              direction: 'down',
+              matchCount,
+              avgY: (this.tiles[col][row].y + this.tiles[col][row + 1].y) / 2,
+            });
+          }
+        }
+      }
+    }
+
+    return possibleMoves;
+  }
+
+  /**
+   * Find the best move: closest to coin position AND with highest Y value (towards bottom)
+   * @param {number} targetX - The X position of the coin
+   * @param {number} targetY - The Y position of the coin
+   * @returns {Object|null} The best move or null if no moves available
+   */
+  findBestMoveForCoins(targetX, targetY) {
+    const possibleMoves = this.findAllPossibleMoves();
+
+    if (possibleMoves.length === 0) {
+      console.log('No possible moves found!');
+      return null;
+    }
+
+    // Calculate average X and distance for each move
+    possibleMoves.forEach((move) => {
+      const tile1 = this.tiles[move.tile1.i][move.tile1.j];
+      const tile2 = this.tiles[move.tile2.i][move.tile2.j];
+      move.avgX = (tile1.x + tile2.x) / 2;
+      move.distance = Math.sqrt(
+        Math.pow(move.avgX - targetX, 2) + Math.pow(move.avgY - targetY, 2),
+      );
+    });
+
+    // Sort: first by highest Y (closest to bottom/800), then by distance to coin
+    // This prioritizes moves that open path downwards while still being near the coin
+    possibleMoves.sort((a, b) => {
+      // Primary: Higher Y value first (closer to bottom where coins go)
+      if (b.avgY !== a.avgY) return b.avgY - a.avgY;
+      // Secondary: Closer to coin position
+      if (a.distance !== b.distance) return a.distance - b.distance;
+      // Tertiary: More matches
+      return b.matchCount - a.matchCount;
+    });
+
+    const bestMove = possibleMoves[0];
+    console.log('Best move for coins:', bestMove);
+    return bestMove;
+  }
+
+  /**
+   * Find all tiles that are near/touching any coin
+   * @param {number} proximityThreshold - How close a coin needs to be to a tile (default 80)
+   * @returns {Set} Set of tile keys "col,row" that are near coins
+   */
+  findTilesNearCoins(proximityThreshold = 80) {
+    const coins = globals.pixiGame?.level3Coins;
+    const nearbyTiles = new Set();
+
+    if (!coins || coins.length === 0) return nearbyTiles;
+
+    for (const coin of coins) {
+      for (let col = 0; col < this.columns; col++) {
+        for (let row = 0; row < this.rows; row++) {
+          const tile = this.tiles[col]?.[row];
+          if (!tile || tile.matched) continue;
+
+          const dx = coin.x - tile.x;
+          const dy = coin.y - tile.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance <= proximityThreshold) {
+            nearbyTiles.add(`${col},${row}`);
+          }
+        }
+      }
+    }
+
+    return nearbyTiles;
+  }
+
+  /**
+   * Find the best move: among tiles touching coins, pick the one with highest Y
+   * @returns {Object|null} The best move or null if no moves available
+   */
+  findBestMoveNearCoins() {
+    const possibleMoves = this.findAllPossibleMoves();
+
+    if (possibleMoves.length === 0) {
+      console.log('No possible moves found!');
+      return null;
+    }
+
+    // Find tiles that are near coins
+    const tilesNearCoins = this.findTilesNearCoins(80);
+    console.log('Tiles near coins:', [...tilesNearCoins]);
+
+    if (tilesNearCoins.size === 0) {
+      console.log('No tiles near coins, falling back to highest Y move');
+      // Fallback: just pick highest Y move
+      possibleMoves.sort((a, b) => b.avgY - a.avgY);
+      return possibleMoves[0];
+    }
+
+    // Filter moves to only include those involving tiles near coins
+    const movesNearCoins = possibleMoves.filter((move) => {
+      const tile1Key = `${move.tile1.i},${move.tile1.j}`;
+      const tile2Key = `${move.tile2.i},${move.tile2.j}`;
+      return tilesNearCoins.has(tile1Key) || tilesNearCoins.has(tile2Key);
+    });
+
+    console.log('Moves near coins:', movesNearCoins.length);
+
+    if (movesNearCoins.length === 0) {
+      console.log('No moves near coins, falling back to highest Y move');
+      // Fallback: just pick highest Y move
+      possibleMoves.sort((a, b) => b.avgY - a.avgY);
+      return possibleMoves[0];
+    }
+
+    // Among moves near coins, pick the one with highest Y value
+    movesNearCoins.sort((a, b) => {
+      // Primary: Higher Y value first (closer to bottom)
+      if (b.avgY !== a.avgY) return b.avgY - a.avgY;
+      // Secondary: More matches
+      return b.matchCount - a.matchCount;
+    });
+
+    const bestMove = movesNearCoins[0];
+    console.log('Best move near coins:', bestMove);
+    return bestMove;
+  }
+
+  /**
+   * Show dynamic tutorial based on coin positions
+   * Finds tiles near coins and shows the best move with highest Y among them
+   */
+  showDynamicTutorial() {
+    const bestMove = this.findBestMoveNearCoins();
+    if (!bestMove) return;
+
+    // Hide existing tutorial
+    this.hideSwapTutorial();
+
+    const startTile = this.tiles[bestMove.tile1.i][bestMove.tile1.j];
+    const endTile = this.tiles[bestMove.tile2.i][bestMove.tile2.j];
+
+    this.hand = new PIXI.Sprite(TextureCache['hand']);
+    this.hand.anchor.set(data.handAnchorX, data.handAnchorY);
+    this.hand.scale.set(data.handScale || 0.5);
+    this.hand.angle = data.handAngle || 0;
+    this.parentObj.addChild(this.hand);
+    this.hand.zIndex = 9;
+
+    this.hand.x = startTile.x;
+    this.hand.y = startTile.y;
+    this.hand.alpha = 0;
+    gsap.to(this.hand, {
+      alpha: 1,
+      duration: 0.2,
+      onComplete: () => {
+        gsap.to(this.hand, {
+          x: endTile.x,
+          y: endTile.y,
+          ease: 'sine.inOut',
+          duration: 1,
+          repeat: -1,
+        });
+      },
+    });
   }
 
   update(delta) {}

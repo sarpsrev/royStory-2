@@ -1,9 +1,9 @@
-import * as PIXI from "pixi.js";
-import globals from "../../../globals";
-import gsap from "gsap";
-import { openStorePage } from "../../../engine";
-import data from "../../config/data";
-import Container2 from "../../config/Container2";
+import * as PIXI from 'pixi.js';
+import globals from '../../../globals';
+import gsap from 'gsap';
+import { openStorePage } from '../../../engine';
+import data from '../../config/data';
+import Container2 from '../../config/Container2';
 
 const TextureCache = PIXI.utils.TextureCache;
 let pixiScene;
@@ -11,7 +11,7 @@ let pixiScene;
 export default class Endcard {
   constructor(didWon = false) {
     this.didWon = didWon;
-    console.log("Endcard constructor");
+    console.log('Endcard constructor');
     pixiScene = globals.pixiScene;
     this.init();
 
@@ -23,12 +23,12 @@ export default class Endcard {
       globals.topBanner.visible = false;
     }
 
-    console.log("Endcard start");
+    console.log('Endcard start');
     this.addBackground();
-    this.addLogo();
+    // this.addLogo();
     this.addHeaderLogo();
-    this.addButton();
-    this.addText();
+    // this.addButton();
+    //this.addText();
 
     if (data.autoRedirectOnEndcard) {
       gsap.delayedCall(1, () => {
@@ -39,82 +39,10 @@ export default class Endcard {
     if (data.clickAnywhereOnEndcardToRedirect) {
       pixiScene.interactive = true;
       pixiScene.buttonMode = true;
-      pixiScene.on("pointerdown", () => {
+      pixiScene.on('pointerdown', () => {
         openStorePage();
       });
     }
-  }
-
-  addText() {
-    this.endcardHeaderDynamicParamNames = [
-      "endcardHeaderText",
-      "endcardHeaderTextColor",
-      "endcardHeaderTextStrokeColor",
-      "endcardHeaderTextStrokeThickness",
-      "endcardHeaderTextPortraitScale",
-      "endcardHeaderTextLandscapeScale",
-      "endCardHeaderTextPosX",
-      "endCardHeaderTextPosY",
-    ];
-
-    this.endcardHeaderDynamicValues = [];
-
-    for (let i = 0; i < this.endcardHeaderDynamicParamNames.length; i++) {
-      this.endcardHeaderDynamicValues.push(data[this.endcardHeaderDynamicParamNames[i]]);
-    }
-
-    this.headerParent = new Container2({ width: 300, height: 80 });
-
-    this.headerParent.zIndex = 3;
-
-    this.headerParent.resize = (w, h) => {
-      this.headerParent.scale.set(
-        Math.min(w / 300, h / 80) * data.endcardHeaderTextPortraitScale * 1.3
-      );
-      this.headerParent.x = w * data.endCardHeaderTextPosX;
-      this.headerParent.y = h * data.endCardHeaderTextPosY;
-
-      if (w > h) {
-        this.headerParent.scale.set(
-          Math.min(w / 300, h / 80) * data.endcardHeaderTextLandscapeScale * 0.6
-        );
-      }
-    };
-
-    this.headerParent.resize(window.innerWidth, window.innerHeight);
-
-    this.headerText = new PIXI.Text(data.endcardHeaderText.split("_").join("\n"), {
-      fontFamily: "game-font",
-      fontSize: 64,
-      fill: data.endcardHeaderTextColor,
-      align: "center",
-      stroke: data.endcardHeaderTextStrokeColor,
-      strokeThickness: data.endcardHeaderTextStrokeThickness,
-      lineJoin: "round",
-    });
-    this.headerText.anchor.set(0.5);
-    this.headerText.x = 0;
-    this.headerText.y = 0;
-
-    this.headerParent.addChild(this.headerText);
-    pixiScene.addChild(this.headerParent);
-
-    this.headerText.updateProps = () => {
-      this.headerText.text = data.endcardHeaderText.split("_").join("\n");
-      this.headerText.style.fill = data.endcardHeaderTextColor;
-      this.headerText.style.stroke = data.endcardHeaderTextStrokeColor;
-      this.headerText.style.strokeThickness = data.endcardHeaderTextStrokeThickness;
-      this.headerParent.resize(window.innerWidth, window.innerHeight);
-    };
-
-    this.headerText.scale.set(0.001);
-
-    gsap.to(this.headerText.scale, {
-      x: 0.4,
-      y: 0.4,
-      duration: 0.8,
-      ease: "back.out(1.3)",
-    });
   }
 
   addButton() {
@@ -123,11 +51,11 @@ export default class Endcard {
 
     cont.zIndex = 3;
 
-    let button = new PIXI.Sprite.from(TextureCache["endcardCtaButton"]);
+    let button = new PIXI.Sprite.from(TextureCache['endcardCtaButton']);
     button.anchor.set(0.5);
 
     button.interactive = true;
-    button.on("pointerdown", () => {
+    button.on('pointerdown', () => {
       openStorePage();
     });
 
@@ -135,14 +63,16 @@ export default class Endcard {
 
     cont.resize = (w, h) => {
       cont.scale.set(
-        Math.min((w * 0.4) / 300, (h * 0.08) / 80) * data.endcardCtaButtonPortraitScale
+        Math.min((w * 0.4) / 300, (h * 0.08) / 80) *
+          data.endcardCtaButtonPortraitScale,
       );
       cont.x = w * data.endcardCtaButtonPosX;
       cont.y = h * data.endcardCtaButtonPosY;
 
       if (w > h) {
         cont.scale.set(
-          Math.min((w * 0.4) / 300, (h * 0.08) / 80) * data.endcardCtaButtonLandscapeScale
+          Math.min((w * 0.4) / 300, (h * 0.08) / 80) *
+            data.endcardCtaButtonLandscapeScale,
         );
       }
     };
@@ -156,16 +86,16 @@ export default class Endcard {
       txt = data.loseCtaText;
     }
 
-    txt = txt.split("_").join("\n");
+    txt = txt.split('_').join('\n');
 
     const text = new PIXI.Text(txt, {
-      fontFamily: "game-font",
+      fontFamily: 'game-font',
       fontSize: 64,
       fill: data.endcardCtaTextColor,
-      align: "center",
+      align: 'center',
       stroke: data.endcardCtaTextStrokeColor,
       strokeThickness: data.endcardCtaTextStrokeThickness,
-      lineJoin: "round",
+      lineJoin: 'round',
     });
     text.anchor.set(0.5);
     button.addChild(text);
@@ -179,9 +109,9 @@ export default class Endcard {
       text.scale.set(data.endcardCtaTextScale * 1);
 
       if (this.didWon) {
-        text.text = data.winCtaText.split("_").join("\n");
+        text.text = data.winCtaText.split('_').join('\n');
       } else {
-        text.text = data.loseCtaText.split("_").join("\n");
+        text.text = data.loseCtaText.split('_').join('\n');
       }
 
       text.x = data.endcardCtaTextPosX;
@@ -200,7 +130,7 @@ export default class Endcard {
       {
         pixi: { scale: 1 },
         duration: 0.6,
-        ease: "sine.out",
+        ease: 'sine.out',
         onComplete: () => {
           gsap.to(button, {
             pixi: { scale: 1.1 },
@@ -210,32 +140,34 @@ export default class Endcard {
             yoyo: true,
           });
         },
-      }
+      },
     );
 
     this.ctaButtonDynamicParamNames = [
-      "endcardCtaButtonPosX",
-      "endcardCtaButtonPosY",
-      "endcardCtaButtonPortraitScale",
-      "endcardCtaButtonLandscapeScale",
+      'endcardCtaButtonPosX',
+      'endcardCtaButtonPosY',
+      'endcardCtaButtonPortraitScale',
+      'endcardCtaButtonLandscapeScale',
     ];
 
     this.ctaTextDynamicParamNames = [
-      "endcardCtaTextColor",
-      "endcardCtaTextStrokeColor",
-      "endcardCtaTextStrokeThickness",
-      "endcardCtaTextScale",
-      "winCtaText",
-      "loseCtaText",
-      "endcardCtaTextPosX",
-      "endcardCtaTextPosY",
+      'endcardCtaTextColor',
+      'endcardCtaTextStrokeColor',
+      'endcardCtaTextStrokeThickness',
+      'endcardCtaTextScale',
+      'winCtaText',
+      'loseCtaText',
+      'endcardCtaTextPosX',
+      'endcardCtaTextPosY',
     ];
 
     this.ctaButtonDynamicValues = [];
     this.ctaTextDynamicValues = [];
 
     for (let i = 0; i < this.ctaButtonDynamicParamNames.length; i++) {
-      this.ctaButtonDynamicValues.push(data[this.ctaButtonDynamicParamNames[i]]);
+      this.ctaButtonDynamicValues.push(
+        data[this.ctaButtonDynamicParamNames[i]],
+      );
     }
 
     for (let i = 0; i < this.ctaTextDynamicParamNames.length; i++) {
@@ -251,7 +183,7 @@ export default class Endcard {
 
     cont.zIndex = 3;
 
-    const logo = PIXI.Sprite.from(TextureCache["endcardLogo"]);
+    const logo = PIXI.Sprite.from(TextureCache['endcardLogo']);
     logo.anchor.set(0.5);
 
     cont.width = cont.iWidth = logo.width;
@@ -262,7 +194,7 @@ export default class Endcard {
       cont.scale.set(
         Math.min((w * 0.5) / cont.iWidth, (h * 0.1) / cont.iHeight) *
           data.endcardLogoPortraitScale *
-          2.6
+          2.6,
       );
       cont.x = w * data.endcardLogoPosX;
       cont.y = h * data.endcardLogoPosY;
@@ -271,7 +203,7 @@ export default class Endcard {
         cont.scale.set(
           Math.min((w * 0.5) / cont.iWidth, (h * 0.1) / cont.iHeight) *
             data.endcardLogoLandscapeScale *
-            2.6
+            2.6,
         );
       }
     };
@@ -283,14 +215,14 @@ export default class Endcard {
     gsap.fromTo(
       logo,
       { pixi: { scale: 0 } },
-      { pixi: { scale: 1 }, duration: 0.8, ease: "back.out(1.3)" }
+      { pixi: { scale: 1 }, duration: 0.8, ease: 'back.out(1.3)' },
     );
 
     this.logoContDynamicParamNames = [
-      "endcardLogoPosX",
-      "endcardLogoPosY",
-      "endcardLogoPortraitScale",
-      "endcardLogoLandscapeScale",
+      'endcardLogoPosX',
+      'endcardLogoPosY',
+      'endcardLogoPortraitScale',
+      'endcardLogoLandscapeScale',
     ];
 
     this.logoDynamicValues = [];
@@ -298,6 +230,85 @@ export default class Endcard {
     for (let i = 0; i < this.logoContDynamicParamNames.length; i++) {
       this.logoDynamicValues.push(data[this.logoContDynamicParamNames[i]]);
     }
+  }
+  addText() {
+    this.endcardHeaderDynamicParamNames = [
+      'endcardHeaderText',
+      'endcardHeaderTextColor',
+      'endcardHeaderTextStrokeColor',
+      'endcardHeaderTextStrokeThickness',
+      'endcardHeaderTextPortraitScale',
+      'endcardHeaderTextLandscapeScale',
+      'endCardHeaderTextPosX',
+      'endCardHeaderTextPosY',
+    ];
+
+    this.endcardHeaderDynamicValues = [];
+
+    for (let i = 0; i < this.endcardHeaderDynamicParamNames.length; i++) {
+      this.endcardHeaderDynamicValues.push(
+        data[this.endcardHeaderDynamicParamNames[i]],
+      );
+    }
+
+    this.headerParent = new Container2({ width: 300, height: 80 });
+
+    this.headerParent.zIndex = 3;
+
+    this.headerParent.resize = (w, h) => {
+      this.headerParent.scale.set(
+        Math.min(w / 300, h / 80) * data.endcardHeaderTextPortraitScale * 1.3,
+      );
+      this.headerParent.x = w * data.endCardHeaderTextPosX;
+      this.headerParent.y = h * data.endCardHeaderTextPosY;
+
+      if (w > h) {
+        this.headerParent.scale.set(
+          Math.min(w / 300, h / 80) *
+            data.endcardHeaderTextLandscapeScale *
+            0.6,
+        );
+      }
+    };
+
+    this.headerParent.resize(window.innerWidth, window.innerHeight);
+
+    this.headerText = new PIXI.Text(
+      data.endcardHeaderText.split('_').join('\n'),
+      {
+        fontFamily: 'game-font',
+        fontSize: data.endcardHeaderTextFontSize,
+        fill: data.endcardHeaderTextColor,
+        align: 'center',
+        stroke: data.endcardHeaderTextStrokeColor,
+        strokeThickness: data.endcardHeaderTextStrokeThickness,
+        lineJoin: 'round',
+      },
+    );
+    this.headerText.anchor.set(0.5);
+    this.headerText.x = 0;
+    this.headerText.y = 0;
+
+    this.headerParent.addChild(this.headerText);
+    pixiScene.addChild(this.headerParent);
+
+    this.headerText.updateProps = () => {
+      this.headerText.text = data.endcardHeaderText.split('_').join('\n');
+      this.headerText.style.fill = data.endcardHeaderTextColor;
+      this.headerText.style.stroke = data.endcardHeaderTextStrokeColor;
+      this.headerText.style.strokeThickness =
+        data.endcardHeaderTextStrokeThickness;
+      this.headerParent.resize(window.innerWidth, window.innerHeight);
+    };
+
+    this.headerText.scale.set(0.001);
+
+    gsap.to(this.headerText.scale, {
+      x: 0.4,
+      y: 0.4,
+      duration: 0.8,
+      ease: 'back.out(1.3)',
+    });
   }
 
   addHeaderLogo() {
@@ -308,7 +319,7 @@ export default class Endcard {
 
     cont.zIndex = 3;
 
-    const logo = PIXI.Sprite.from(TextureCache["endcardHeaderLogo"]);
+    const logo = PIXI.Sprite.from(TextureCache['endcardHeaderLogo']);
     logo.anchor.set(0.5);
 
     cont.width = cont.iWidth = logo.width;
@@ -319,7 +330,7 @@ export default class Endcard {
       cont.scale.set(
         Math.min((w * 0.5) / cont.iWidth, (h * 0.1) / cont.iHeight) *
           data.endcardHeaderLogoPortraitScale *
-          3.3
+          3.3,
       );
       cont.x = w * data.endcardHeaderLogoPosX;
       cont.y = h * data.endcardHeaderLogoPosY;
@@ -328,7 +339,7 @@ export default class Endcard {
         cont.scale.set(
           Math.min((w * 0.5) / cont.iWidth, (h * 0.1) / cont.iHeight) *
             data.endcardHeaderLogoLandscapeScale *
-            3.3
+            3.3,
         );
       }
     };
@@ -336,24 +347,162 @@ export default class Endcard {
 
     this.headerLogoCont = cont;
 
+    const maintext = new PIXI.Text(
+      data.endcardHeaderText.split('_').join('\n'),
+      {
+        fontFamily: 'game-font',
+        fontSize: data.endcardHeaderTextFontSize,
+        fill: data.endcardHeaderTextColor,
+        align: 'center',
+        stroke: data.endcardHeaderTextStrokeColor,
+        strokeThickness: data.endcardHeaderTextStrokeThickness,
+        lineJoin: 'round',
+      },
+    );
+
+    maintext.text = data.endcardHeaderText.split('_').join('\n');
+
+    maintext.anchor.set(0.5);
+    maintext.x = data.endcardHeaderTextPosX;
+    maintext.y = data.endcardHeaderTextPosY;
+    logo.addChild(maintext);
+
+    // Store reference for dynamic updates
+    this.headerMainText = maintext;
+    this.headerMainText.updateProps = () => {
+      this.headerMainText.text = data.endcardHeaderText.split('_').join('\n');
+      this.headerMainText.style.fontSize = data.endcardHeaderTextFontSize;
+      this.headerMainText.style.fill = data.endcardHeaderTextColor;
+      this.headerMainText.style.stroke = data.endcardHeaderTextStrokeColor;
+      this.headerMainText.style.strokeThickness =
+        data.endcardHeaderTextStrokeThickness;
+      this.headerMainText.x = data.endcardHeaderTextPosX;
+      this.headerMainText.y = data.endcardHeaderTextPosY;
+    };
+
+    const ecButton = PIXI.Sprite.from(TextureCache['endcardCtaButton']);
+    ecButton.anchor.set(0.5);
+    ecButton.x = data.endcardButtonPosX;
+    ecButton.y = data.endcardButtonPosY;
+    ecButton.scale.set(data.endcardButtonScale);
+    gsap.to(ecButton, {
+      pixi: { scale: data.endcardButtonScale * 1.07 },
+      duration: 0.8,
+      ease: 'power1.inOut',
+      repeat: -1,
+      yoyo: true,
+    });
+    logo.addChild(ecButton);
+
+    // Store reference for dynamic updates
+    this.endcardButton = ecButton;
+    this.endcardButton.updateProps = () => {
+      this.endcardButton.x = data.endcardButtonPosX;
+      this.endcardButton.y = data.endcardButtonPosY;
+      this.endcardButton.scale.set(data.endcardButtonScale);
+    };
+
+    const buttonText = new PIXI.Text(
+      data.endcardButtonText.split('_').join('\n'),
+      {
+        fontFamily: 'game-font',
+        fontSize: data.endcardButtonTextFontSize,
+        fill: data.endcardButtonTextColor,
+        align: 'center',
+        stroke: data.endcardButtonTextStrokeColor,
+        strokeThickness: data.endcardButtonTextStrokeThickness,
+        lineJoin: 'round',
+      },
+    );
+
+    buttonText.anchor.set(0.5);
+    buttonText.x = data.endcardButtonTextPosX;
+    buttonText.y = data.endcardButtonTextPosY;
+
+    ecButton.addChild(buttonText);
+
+    // Store reference for dynamic updates
+    this.endcardButtonText = buttonText;
+    this.endcardButtonText.updateProps = () => {
+      this.endcardButtonText.text = data.endcardButtonText
+        .split('_')
+        .join('\n');
+      this.endcardButtonText.style.fontSize = data.endcardButtonTextFontSize;
+      this.endcardButtonText.style.fill = data.endcardButtonTextColor;
+      this.endcardButtonText.style.stroke = data.endcardButtonTextStrokeColor;
+      this.endcardButtonText.style.strokeThickness =
+        data.endcardButtonTextStrokeThickness;
+      this.endcardButtonText.x = data.endcardButtonTextPosX;
+      this.endcardButtonText.y = data.endcardButtonTextPosY;
+    };
+
     //animate logo
     gsap.fromTo(
       logo,
       { pixi: { scale: 0 } },
-      { pixi: { scale: 1 }, duration: 0.8, ease: "back.out(1.3)" }
+      { pixi: { scale: 1 }, duration: 0.8, ease: 'back.out(1.3)' },
     );
 
     this.headerLogoDynamicParamNames = [
-      "endcardHeaderLogoPosX",
-      "endcardHeaderLogoPosY",
-      "endcardHeaderLogoPortraitScale",
-      "endcardHeaderLogoLandscapeScale",
+      'endcardHeaderLogoPosX',
+      'endcardHeaderLogoPosY',
+      'endcardHeaderLogoPortraitScale',
+      'endcardHeaderLogoLandscapeScale',
     ];
 
     this.headerLogoDynamicValues = [];
 
     for (let i = 0; i < this.headerLogoDynamicParamNames.length; i++) {
-      this.headerLogoDynamicValues.push(data[this.headerLogoDynamicParamNames[i]]);
+      this.headerLogoDynamicValues.push(
+        data[this.headerLogoDynamicParamNames[i]],
+      );
+    }
+
+    // Dynamic tracking for header text
+    this.headerMainTextDynamicParamNames = [
+      'endcardHeaderText',
+      'endcardHeaderTextFontSize',
+      'endcardHeaderTextColor',
+      'endcardHeaderTextStrokeColor',
+      'endcardHeaderTextStrokeThickness',
+      'endcardHeaderTextPosX',
+      'endcardHeaderTextPosY',
+    ];
+    this.headerMainTextDynamicValues = [];
+    for (let i = 0; i < this.headerMainTextDynamicParamNames.length; i++) {
+      this.headerMainTextDynamicValues.push(
+        data[this.headerMainTextDynamicParamNames[i]],
+      );
+    }
+
+    // Dynamic tracking for endcard button
+    this.endcardButtonDynamicParamNames = [
+      'endcardButtonPosX',
+      'endcardButtonPosY',
+      'endcardButtonScale',
+    ];
+    this.endcardButtonDynamicValues = [];
+    for (let i = 0; i < this.endcardButtonDynamicParamNames.length; i++) {
+      this.endcardButtonDynamicValues.push(
+        data[this.endcardButtonDynamicParamNames[i]],
+      );
+    }
+
+    // Dynamic tracking for button text
+    this.endcardButtonTextDynamicParamNames = [
+      'endcardButtonText',
+      'endcardButtonTextFontSize',
+      'endcardButtonTextColor',
+      'endcardButtonTextStrokeColor',
+      'endcardButtonTextStrokeThickness',
+      'endcardButtonTextPosX',
+      'endcardButtonTextPosY',
+    ];
+    this.endcardButtonTextDynamicValues = [];
+    for (let i = 0; i < this.endcardButtonTextDynamicParamNames.length; i++) {
+      this.endcardButtonTextDynamicValues.push(
+        data[this.endcardButtonTextDynamicParamNames[i]],
+      );
     }
   }
 
@@ -388,9 +537,14 @@ export default class Endcard {
           duration: 0.4,
           onComplete: () => {
             this.backgroundDynamicValues = [];
-            this.backgroundDynamicParamNames = ["endcardFlatBgColor", "endcardFlatBgOpacity"];
+            this.backgroundDynamicParamNames = [
+              'endcardFlatBgColor',
+              'endcardFlatBgOpacity',
+            ];
             for (let i = 0; i < this.backgroundDynamicParamNames.length; i++) {
-              this.backgroundDynamicValues.push(data[this.backgroundDynamicParamNames[i]]);
+              this.backgroundDynamicValues.push(
+                data[this.backgroundDynamicParamNames[i]],
+              );
             }
             this.background = background;
             this.background.updateProps = () => {
@@ -398,10 +552,10 @@ export default class Endcard {
               this.background.alpha = data.endcardFlatBgOpacity;
             };
           },
-        }
+        },
       );
     } else {
-      const background = PIXI.Sprite.from(TextureCache["endcardBg"]);
+      const background = PIXI.Sprite.from(TextureCache['endcardBg']);
 
       background.zIndex = 2;
       background.anchor.set(0.5);
@@ -410,7 +564,9 @@ export default class Endcard {
       background.resize = (w, h) => {
         background.x = w * 0.5;
         background.y = h * 0.5;
-        background.scale.set(Math.max(w / background.iWidth, h / background.iHeight));
+        background.scale.set(
+          Math.max(w / background.iWidth, h / background.iHeight),
+        );
       };
       background.resize(window.innerWidth, window.innerHeight);
 
@@ -471,6 +627,45 @@ export default class Endcard {
         if (oldVal != newVal) {
           this.headerLogoDynamicValues[i] = newVal;
           this.headerLogoCont.resize(window.innerWidth, window.innerHeight);
+        }
+      }
+    }
+
+    // Dynamic update for header main text
+    if (this.headerMainTextDynamicValues) {
+      for (let i = 0; i < this.headerMainTextDynamicValues.length; i++) {
+        let oldVal = this.headerMainTextDynamicValues[i];
+        let newVal = data[this.headerMainTextDynamicParamNames[i]];
+
+        if (oldVal != newVal) {
+          this.headerMainTextDynamicValues[i] = newVal;
+          this.headerMainText.updateProps();
+        }
+      }
+    }
+
+    // Dynamic update for endcard button
+    if (this.endcardButtonDynamicValues) {
+      for (let i = 0; i < this.endcardButtonDynamicValues.length; i++) {
+        let oldVal = this.endcardButtonDynamicValues[i];
+        let newVal = data[this.endcardButtonDynamicParamNames[i]];
+
+        if (oldVal != newVal) {
+          this.endcardButtonDynamicValues[i] = newVal;
+          this.endcardButton.updateProps();
+        }
+      }
+    }
+
+    // Dynamic update for endcard button text
+    if (this.endcardButtonTextDynamicValues) {
+      for (let i = 0; i < this.endcardButtonTextDynamicValues.length; i++) {
+        let oldVal = this.endcardButtonTextDynamicValues[i];
+        let newVal = data[this.endcardButtonTextDynamicParamNames[i]];
+
+        if (oldVal != newVal) {
+          this.endcardButtonTextDynamicValues[i] = newVal;
+          this.endcardButtonText.updateProps();
         }
       }
     }

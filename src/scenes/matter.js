@@ -1,5 +1,6 @@
 import Matter from 'matter-js';
 import globals from '../../globals';
+import data from '../config/data';
 
 let engine, world;
 
@@ -37,6 +38,13 @@ class matterPhysics {
 
     globals.matterPhysics = this;
 
+    let opacity = '0.5';
+    if (data.debugPhysics) {
+      opacity = '0.5';
+    } else {
+      opacity = '0';
+    }
+
     // Debug Canvas - Fizik objelerini görmek için
     this.debugCanvas = document.createElement('canvas');
     this.debugCanvas.width = window.innerWidth;
@@ -46,7 +54,7 @@ class matterPhysics {
     this.debugCanvas.style.left = '0';
     this.debugCanvas.style.pointerEvents = 'none';
     this.debugCanvas.style.zIndex = '10000';
-    this.debugCanvas.style.opacity = '0.5'; // Saydam - Pixi'yi de görmek için
+    this.debugCanvas.style.opacity = opacity; // Saydam - Pixi'yi de görmek için
     document.body.appendChild(this.debugCanvas);
 
     // Debug Render
@@ -73,7 +81,9 @@ class matterPhysics {
       this.debugRender.options.height = window.innerHeight;
       this.debugRender.bounds.max.x = window.innerWidth;
       this.debugRender.bounds.max.y = window.innerHeight;
-      this.updateDebugTransform();
+      // Mevcut playground transform değerlerini koru
+      const { x, y, scaleX, scaleY } = this.playgroundTransform;
+      this.updateDebugTransform(x, y, scaleX, scaleY);
     });
 
     // this.enableDebugDraw();

@@ -16,7 +16,6 @@ import CoinConfigDatas from './coinConfigDatas';
 import MatchBoard from './matchBoard';
 
 // Coin configuration constants
-const LEVEL3_COIN_SCALE = 0.4;
 
 let pixiScene = null;
 let pixiApp = null;
@@ -26,9 +25,13 @@ const TextureCache = PIXI.utils.TextureCache;
 export default class PixiGame {
   constructor() {
     console.log('Game constructor');
+    this.LEVEL3_COIN_SCALE = data.coinScale;
 
     pixiScene = globals.pixiScene;
     pixiApp = globals.pixiApp;
+    this.clickOnXclicksToEndCard = 0;
+    this.releaseOnXreleasesToEndCard = 0;
+    this.isLose = false;
 
     this.text = null;
 
@@ -53,24 +56,22 @@ export default class PixiGame {
     //
     // this.addHeaderText();
     //  this.addTopBanner();
-    //  this.addCta();
-    //   this.addLogo();
-    // this.setMarketRedirectionClicks();
+    this.addCta();
+    this.addLogo();
+    this.setMarketRedirectionClicks();
 
     // Setup coins
     this.coinConfigData = new CoinConfigDatas();
-    gsap.delayedCall(1, () => {
-      // this.addLevel3Coins();
-      // this.map3placement();
-    });
-    //this.placeLevel3Colliders();
-    this.addLevel3Coins();
-    this.map3placement();
+
+    this.addCoins();
+    this.mapPlacement();
     this.placeWallColliders();
     this.addCharacter(0, -21);
     this.setCharacterAnimation('idle', true);
-    this.startCharacterMovement(-150, 21, 30);
-
+    gsap.delayedCall(1.5, () => {
+      this.startCharacterMovement(-150, 21, data.gameDuration);
+      AudioManager.playSFX('royBg', true);
+    });
     // example usage:
     // globals.EventEmitter.emit("gameFinished", true); // true for win, false for lose
     globals.EventEmitter.on('gameFinished', (isWin = true) => {
@@ -113,9 +114,11 @@ export default class PixiGame {
     window.addEventListener('keydown', (event) => {
       if (event.key === 'c') {
         globals.EventEmitter.emit('gameFinished', true);
+        AudioManager.stopSFX('royBg');
       }
       if (event.key === 'v') {
         globals.EventEmitter.emit('gameFinished', false);
+        AudioManager.stopSFX('royBg');
       }
       if (event.key === 'l') {
         this.characterLunge();
@@ -137,6 +140,7 @@ export default class PixiGame {
 
   marketRedirectClicks = 0;
   marketRedirectReleases = 0;
+  clickOnXclicksToEndCard = 0;
   setMarketRedirectionClicks() {
     pixiScene.on('pointerdown', (e) => {
       if (data.marketRedirectOnXclicks != 0) {
@@ -144,6 +148,18 @@ export default class PixiGame {
 
         if (this.marketRedirectClicks >= data.marketRedirectOnXclicks) {
           openStorePage();
+        }
+      }
+      if (data.clickOnXclicksToEndCard != 0) {
+        this.clickOnXclicksToEndCard++;
+
+        if (this.clickOnXclicksToEndCard >= data.clickOnXclicksToEndCard) {
+          globals.EventEmitter.emit('gameFinished', false);
+          AudioManager.stopSFX('royBg');
+
+          if (this.currentMatchBoard.hand) {
+            this.currentMatchBoard.hand.visible = false;
+          }
         }
       }
     });
@@ -156,10 +172,29 @@ export default class PixiGame {
           openStorePage();
         }
       }
+      if (data.releaseOnXreleasesToEndCard != 0) {
+        this.releaseOnXreleasesToEndCard++;
+
+        if (
+          this.releaseOnXreleasesToEndCard >= data.releaseOnXreleasesToEndCard
+        ) {
+          globals.EventEmitter.emit('gameFinished', false);
+          AudioManager.stopSFX('royBg');
+
+          if (this.currentMatchBoard.hand) {
+            this.currentMatchBoard.hand.visible = false;
+          }
+        }
+      }
     });
   }
 
   addBackground() {
+    // Skip Pixi background if we're using orientation-based backgrounds in Three.js
+    if (data.bgSrcVertical || data.bgSrcHorizontal) {
+      return;
+    }
+
     let key = 'bg';
     let background;
 
@@ -305,6 +340,22 @@ export default class PixiGame {
       badgeParent.addChild(badge);
       badge.scale.set(0.5);
       badge.alpha = 0;
+
+      const style = new PIXI.TextStyle({
+        fontFamily: 'badgeCustomFont',
+        fontSize: data.badgeTextFontSize,
+        fill: badgeTextColor,
+        strokeThickness: badgeStrokeThickness,
+        stroke: badgeTextStrokeColor,
+        wordWrap: false,
+        align: 'center',
+        lineJoin: 'round',
+      });
+
+      const text = new PIXI.Text(badgeText, style);
+      text.anchor.set(0.5);
+
+      badge.addChild(text);
       gsap.to(badge, {
         alpha: 1,
         duration: 0.5,
@@ -352,7 +403,7 @@ export default class PixiGame {
       // We want: playground.y + (250 * scale) = h * 0.9
       // So: playground.y = h * 0.9 - (250 * scale)
       const playgroundHalfHeight = 230; // Half of playground logical height (500/2)
-      this.playground.y = h * 0.7 - playgroundHalfHeight * scale;
+      this.playground.y = h * 0.65 - playgroundHalfHeight * scale;
       if (w > h) {
         this.playground.y = h * 0.71 - playgroundHalfHeight * scale;
       }
@@ -392,31 +443,209 @@ export default class PixiGame {
     return matchBoard;
   }
 
-  map3placement() {
+  mapPlacement() {
+    this.ground = null;
+    this.up = null;
+    this.sideLeft = null;
+    this.sideRight = null;
+    this.upWall = null;
+    this.topBottomSide = null;
+    this.downBottomSide = null;
+    this.thorn = null;
     this.map3elements = [];
+    this.mapAssets = [
+      this.ground,
+      this.up,
+      this.sideLeft,
+      this.sideRight,
+      this.upWall,
+      this.topBottomSide,
+      this.downBottomSide,
+      this.thorn,
+    ];
     let textureNames = [
       'ground',
-      'up',
+      'upBlock',
       'side',
       'side',
       'upWall',
       'topBottomSide',
       'topBottomSide',
+      'thorns',
     ];
-    let xPositions = [-210, -210, -285, 210, -400, -525, -525];
-    let yPositions = [-30, -450, -450, -450, -850, -480, 500];
-    let scale = [0.45, 0.45, 0.5, 0.5, 0.8, 1, 1];
-    let renderOrder = [0, 0, 0, 0, 4, 5, 5];
+    let xPositions = [
+      data.groundPositionX,
+      data.upPositionX,
+      data.sideLeftPositionX,
+      data.sideRightPositionX,
+      data.upWallPositionX,
+      data.topBottomSidePositionX,
+      data.downBottomSidePositionX,
+      data.thornsPositionX,
+    ];
+    let yPositions = [
+      data.groundPositionY,
+      data.upPositionY,
+      data.sideLeftPositionY,
+      data.sideRightPositionY,
+      data.upWallPositionY,
+      data.topBottomSidePositionY,
+      data.downBottomSidePositionY,
+      data.thornsPositionY,
+    ];
+    let scale = [
+      data.groundScale,
+      data.upScale,
+      data.sideLeftScale,
+      data.sideRightScale,
+      data.upWallScale,
+      data.topBottomSideScale,
+      data.downBottomSideScale,
+      data.thornsScale,
+    ];
+    let renderOrder = [0, 0, 0, 0, 4, 5, 0, 5];
+    let angles = [
+      data.groundAngle,
+      data.upAngle,
+      data.sideLeftAngle,
+      data.sideRightAngle,
+      data.upWallAngle,
+      data.topBottomSideAngle,
+      data.downBottomSideAngle,
+      data.thornsAngle,
+    ];
 
     for (let i = 0; i < textureNames.length; i++) {
       let element = new PIXI.Sprite(TextureCache[textureNames[i]]);
+      element.anchor.set(0.5); // Merkez noktasından rotate etmek için
       element.x = xPositions[i];
       element.y = yPositions[i];
       element.scale.set(scale[i]);
       element.zIndex = renderOrder[i];
+      element.angle = angles[i];
       this.moveablePlayground.addChild(element);
       this.map3elements.push(element);
+      this.mapAssets[i] = element;
     }
+
+    // Dinamik map asset tracking sistemi
+    this.mapAssetDynamicConfigs = [
+      {
+        sprite: this.mapAssets[0], // ground
+        paramNames: [
+          'groundPositionX',
+          'groundPositionY',
+          'groundScale',
+          'groundAngle',
+        ],
+        oldValues: [
+          data.groundPositionX,
+          data.groundPositionY,
+          data.groundScale,
+          data.groundAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[1], // up
+        paramNames: ['upPositionX', 'upPositionY', 'upScale', 'upAngle'],
+        oldValues: [
+          data.upPositionX,
+          data.upPositionY,
+          data.upScale,
+          data.upAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[2], // sideLeft
+        paramNames: [
+          'sideLeftPositionX',
+          'sideLeftPositionY',
+          'sideLeftScale',
+          'sideLeftAngle',
+        ],
+        oldValues: [
+          data.sideLeftPositionX,
+          data.sideLeftPositionY,
+          data.sideLeftScale,
+          data.sideLeftAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[3], // sideRight
+        paramNames: [
+          'sideRightPositionX',
+          'sideRightPositionY',
+          'sideRightScale',
+          'sideRightAngle',
+        ],
+        oldValues: [
+          data.sideRightPositionX,
+          data.sideRightPositionY,
+          data.sideRightScale,
+          data.sideRightAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[4], // upWall
+        paramNames: [
+          'upWallPositionX',
+          'upWallPositionY',
+          'upWallScale',
+          'upWallAngle',
+        ],
+        oldValues: [
+          data.upWallPositionX,
+          data.upWallPositionY,
+          data.upWallScale,
+          data.upWallAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[5], // topBottomSide
+        paramNames: [
+          'topBottomSidePositionX',
+          'topBottomSidePositionY',
+          'topBottomSideScale',
+          'topBottomSideAngle',
+        ],
+        oldValues: [
+          data.topBottomSidePositionX,
+          data.topBottomSidePositionY,
+          data.topBottomSideScale,
+          data.topBottomSideAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[6], // downBottomSide
+        paramNames: [
+          'downBottomSidePositionX',
+          'downBottomSidePositionY',
+          'downBottomSideScale',
+          'downBottomSideAngle',
+        ],
+        oldValues: [
+          data.downBottomSidePositionX,
+          data.downBottomSidePositionY,
+          data.downBottomSideScale,
+          data.downBottomSideAngle,
+        ],
+      },
+      {
+        sprite: this.mapAssets[7], // thorn
+        paramNames: [
+          'thornsPositionX',
+          'thornsPositionY',
+          'thornsScale',
+          'thornsAngle',
+        ],
+        oldValues: [
+          data.thornsPositionX,
+          data.thornsPositionY,
+          data.thornsScale,
+          data.thornsAngle,
+        ],
+      },
+    ];
 
     if (this.currentMatchBoard) {
       this.currentMatchBoard.hideBoardAndDeactivateCollidersAndInputs();
@@ -428,9 +657,39 @@ export default class PixiGame {
     //  this.addLevel3Environment();
   }
 
+  /**
+   * Check and update map assets if data values changed
+   */
+  updateDynamicMapAssets() {
+    if (!this.mapAssetDynamicConfigs) return;
+
+    for (let config of this.mapAssetDynamicConfigs) {
+      if (!config.sprite) continue;
+
+      let needsUpdate = false;
+
+      // Check if any parameter changed
+      for (let i = 0; i < config.paramNames.length; i++) {
+        const newVal = data[config.paramNames[i]];
+        if (config.oldValues[i] !== newVal) {
+          config.oldValues[i] = newVal;
+          needsUpdate = true;
+        }
+      }
+
+      // Update sprite if any value changed
+      if (needsUpdate) {
+        config.sprite.x = config.oldValues[0]; // positionX
+        config.sprite.y = config.oldValues[1]; // positionY
+        config.sprite.scale.set(config.oldValues[2]); // scale
+        config.sprite.angle = config.oldValues[3]; // angle
+      }
+    }
+  }
+
   // ============ COIN METHODS ============
 
-  addLevel3Coins() {
+  addCoins() {
     let coinConfigData = this.coinConfigData.level3Coins;
 
     this.level3Coins = [];
@@ -450,12 +709,12 @@ export default class PixiGame {
       this.moveablePlayground.addChild(coin);
       coin.position.set(coinData.position.x, coinData.position.y);
       coin.anchor.set(0.5);
-      coin.scale.set(LEVEL3_COIN_SCALE);
+      coin.scale.set(this.LEVEL3_COIN_SCALE);
       coin.zIndex = 4;
       coin.body = this.matter.circle(
         coinData.position.x,
         coinData.position.y,
-        40 * LEVEL3_COIN_SCALE,
+        40 * this.LEVEL3_COIN_SCALE,
         {
           isStatic: false,
           collisionFilter: {
@@ -514,8 +773,9 @@ export default class PixiGame {
     const targetCount = this.maxCoin3Count * (data.coinTargetPercentage / 100);
     if (this.coinCollectedCount >= targetCount && !this.isGameFinished) {
       this.isGameFinished = true;
-      this.setCharacterAnimation('win');
+      if (this.isLose) return;
       this.pauseCharacterMovement();
+      this.characterFnishPush();
 
       console.log(
         'Coin target reached! (' +
@@ -594,8 +854,59 @@ export default class PixiGame {
     gameObject.y = y;
     gameObject.zIndex = 50;
 
+    this.shield = PIXI.Sprite.from(TextureCache['shield']);
+    this.shield.anchor.set(0.5);
+    this.shield.scale.set(data.shieldScale);
+    this.shield.x = data.shieldPositionX;
+    this.shield.y = data.shieldPositionY;
+    this.shield.angle = data.shieldAngle;
+    gameObject.addChild(this.shield);
+
+    // Dinamik shield tracking
+    this.shieldDynamicConfig = {
+      sprite: this.shield,
+      paramNames: [
+        'shieldPositionX',
+        'shieldPositionY',
+        'shieldScale',
+        'shieldAngle',
+      ],
+      oldValues: [
+        data.shieldPositionX,
+        data.shieldPositionY,
+        data.shieldScale,
+        data.shieldAngle,
+      ],
+    };
+
     // Add child collider that follows the character
-    this.addCharacterCollider(gameObject, 20, -60, 200, 100, -30);
+    this.characterCollider = this.addCharacterCollider(
+      gameObject,
+      data.characterColliderXPosition,
+      data.characterColliderYPosition,
+      data.characterColliderWidth,
+      data.characterColliderHeight,
+      data.characterColliderAngle,
+    );
+
+    // Dinamik character collider tracking
+    this.characterColliderDynamicConfig = {
+      collider: this.characterCollider,
+      paramNames: [
+        'characterColliderXPosition',
+        'characterColliderYPosition',
+        'characterColliderWidth',
+        'characterColliderHeight',
+        'characterColliderAngle',
+      ],
+      oldValues: [
+        data.characterColliderXPosition,
+        data.characterColliderYPosition,
+        data.characterColliderWidth,
+        data.characterColliderHeight,
+        data.characterColliderAngle,
+      ],
+    };
 
     this.character = gameObject;
     return gameObject;
@@ -693,6 +1004,22 @@ export default class PixiGame {
       ease: 'none',
       onComplete: () => {
         console.log('Character movement completed');
+        this.setCharacterAnimation('dead', false);
+        gsap.to(this.shield.scale, {
+          x: 0,
+          y: 0,
+          duration: 0.2,
+          ease: 'none',
+        });
+        this.isLose = true;
+
+        gsap.delayedCall(1, () => {
+          globals.EventEmitter.emit('gameFinished', false);
+          AudioManager.stopSFX('royBg');
+          if (this.currentMatchBoard.hand) {
+            this.currentMatchBoard.hand.visible = false;
+          }
+        });
       },
     });
   }
@@ -743,6 +1070,8 @@ export default class PixiGame {
     // Pause main movement first
     this.pauseCharacterMovement();
     this.setCharacterAnimation('frontPush', false);
+    AudioManager.playSFX('pushSound');
+    AudioManager.stopSFX('royBg');
 
     // Create lunge tween
     this.lungeTween = gsap.to(this.character, {
@@ -755,6 +1084,53 @@ export default class PixiGame {
         if (onComplete) onComplete();
         this.resumeCharacterMovement();
         this.setCharacterAnimation('idle', true);
+        AudioManager.playSFX('royBg', true);
+      },
+    });
+
+    return this.lungeTween;
+  }
+
+  characterFnishPush(
+    lungeX = 50,
+    lungeY = -28,
+    duration = 1,
+    onComplete = null,
+  ) {
+    if (!this.character) return;
+
+    // Prevent multiple lunges at the same time
+    if (this.isLunging) return;
+    this.isLunging = true;
+
+    // Pause main movement first
+    this.pauseCharacterMovement();
+    this.setCharacterAnimation('frontPush', false);
+    AudioManager.playSFX('pushSound');
+    AudioManager.stopSFX('royBg');
+
+    // Create lunge tween
+    this.lungeTween = gsap.to(this.character, {
+      x: lungeX,
+      y: lungeY,
+      duration: duration,
+      onComplete: () => {
+        console.log('Lunge completed');
+        this.isLunging = false;
+        if (onComplete) onComplete();
+        this.setCharacterAnimation('win', true);
+        if (this.currentMatchBoard.hand) {
+          this.currentMatchBoard.hand.visible = false;
+        }
+        gsap.delayedCall(1, () => {
+          globals.EventEmitter.emit('gameFinished', true);
+          AudioManager.stopSFX('royBg');
+        });
+        gsap.to(this.shield.scale, {
+          x: 0,
+          y: 0,
+          duration: 0.3,
+        });
       },
     });
 
@@ -829,88 +1205,328 @@ export default class PixiGame {
 
   placeWallColliders() {
     this.wallColliders = [];
-    this.addWallCollider(250, 0, 80, 5000, 0);
-    this.addWallCollider(-250, 0, 70, 5000, 0);
-    // this.addWallCollider(-180, 50, 100, 100, 0);
-    this.addWallCollider(-95, 20, 300, 40, 0);
 
-    this.addWallCollider(-95, 10, 30, 300, -30);
+    // Dinamik collider tracking sistemi
+    this.colliderDynamicConfigs = [];
 
-    this.addWallCollider(-70, -1700, 300, 3000, 0);
-    this.addWallCollider(-75, -170, 30, 300, -30);
+    // Right Wall Collider
+    this.rightWallCollider = this.addWallCollider(
+      data.rightWallColiderXPosition,
+      data.rightWallColiderYPosition,
+      data.rightWallColiderWidth,
+      data.rightWallColiderHeight,
+      data.rightWallColiderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.rightWallCollider,
+      paramNames: [
+        'rightWallColiderXPosition',
+        'rightWallColiderYPosition',
+        'rightWallColiderWidth',
+        'rightWallColiderHeight',
+        'rightWallColiderAngle',
+      ],
+      oldValues: [
+        data.rightWallColiderXPosition,
+        data.rightWallColiderYPosition,
+        data.rightWallColiderWidth,
+        data.rightWallColiderHeight,
+        data.rightWallColiderAngle,
+      ],
+    });
+
+    // Left Wall Collider
+    this.leftWallCollider = this.addWallCollider(
+      data.leftWallColiderXPosition,
+      data.leftWallColiderYPosition,
+      data.leftWallColiderWidth,
+      data.leftWallColiderHeight,
+      data.leftWallColiderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.leftWallCollider,
+      paramNames: [
+        'leftWallColiderXPosition',
+        'leftWallColiderYPosition',
+        'leftWallColiderWidth',
+        'leftWallColiderHeight',
+        'leftWallColiderAngle',
+      ],
+      oldValues: [
+        data.leftWallColiderXPosition,
+        data.leftWallColiderYPosition,
+        data.leftWallColiderWidth,
+        data.leftWallColiderHeight,
+        data.leftWallColiderAngle,
+      ],
+    });
+
+    // Down Side Main Collider
+    this.downSideMainCollider = this.addWallCollider(
+      data.downSideMainColliderXPosition,
+      data.downSideMainColliderYPosition,
+      data.downSideMainColliderWidth,
+      data.downSideMainColliderHeight,
+      data.downSideMainColliderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.downSideMainCollider,
+      paramNames: [
+        'downSideMainColliderXPosition',
+        'downSideMainColliderYPosition',
+        'downSideMainColliderWidth',
+        'downSideMainColliderHeight',
+        'downSideMainColliderAngle',
+      ],
+      oldValues: [
+        data.downSideMainColliderXPosition,
+        data.downSideMainColliderYPosition,
+        data.downSideMainColliderWidth,
+        data.downSideMainColliderHeight,
+        data.downSideMainColliderAngle,
+      ],
+    });
+
+    // Downside Hole Collider
+    this.downsideHoleCollider = this.addWallCollider(
+      data.downsideHoleColliderXPosition,
+      data.downsideHoleColliderYPosition,
+      data.downsideHoleColliderWidth,
+      data.downsideHoleColliderHeight,
+      data.downsideHoleColliderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.downsideHoleCollider,
+      paramNames: [
+        'downsideHoleColliderXPosition',
+        'downsideHoleColliderYPosition',
+        'downsideHoleColliderWidth',
+        'downsideHoleColliderHeight',
+        'downsideHoleColliderAngle',
+      ],
+      oldValues: [
+        data.downsideHoleColliderXPosition,
+        data.downsideHoleColliderYPosition,
+        data.downsideHoleColliderWidth,
+        data.downsideHoleColliderHeight,
+        data.downsideHoleColliderAngle,
+      ],
+    });
+
+    // Upside Main Collider
+    this.upsideMainCollider = this.addWallCollider(
+      data.upSideMainColliderXPosition,
+      data.upSideMainColliderYPosition,
+      data.upSideMainColliderWidth,
+      data.upSideMainColliderHeight,
+      data.upSideMainColliderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.upsideMainCollider,
+      paramNames: [
+        'upSideMainColliderXPosition',
+        'upSideMainColliderYPosition',
+        'upSideMainColliderWidth',
+        'upSideMainColliderHeight',
+        'upSideMainColliderAngle',
+      ],
+      oldValues: [
+        data.upSideMainColliderXPosition,
+        data.upSideMainColliderYPosition,
+        data.upSideMainColliderWidth,
+        data.upSideMainColliderHeight,
+        data.upSideMainColliderAngle,
+      ],
+    });
+
+    // Upside Hole Collider
+    this.upsideHoleCollider = this.addWallCollider(
+      data.upSideHoleColliderXPosition,
+      data.upSideHoleColliderYPosition,
+      data.upSideHoleColliderWidth,
+      data.upSideHoleColliderHeight,
+      data.upSideHoleColliderAngle,
+    );
+    this.colliderDynamicConfigs.push({
+      collider: this.upsideHoleCollider,
+      paramNames: [
+        'upSideHoleColliderXPosition',
+        'upSideHoleColliderYPosition',
+        'upSideHoleColliderWidth',
+        'upSideHoleColliderHeight',
+        'upSideHoleColliderAngle',
+      ],
+      oldValues: [
+        data.upSideHoleColliderXPosition,
+        data.upSideHoleColliderYPosition,
+        data.upSideHoleColliderWidth,
+        data.upSideHoleColliderHeight,
+        data.upSideHoleColliderAngle,
+      ],
+    });
   }
 
-  placeLevel3Colliders() {
-    this.map3colliders = [];
+  /**
+   * Update a wall collider with new parameters
+   * @param {object} collider - The collider graphics object
+   * @param {number} x - New X position
+   * @param {number} y - New Y position
+   * @param {number} width - New width
+   * @param {number} height - New height
+   * @param {number} angle - New angle
+   */
+  updateWallCollider(collider, x, y, width, height, angle) {
+    if (!collider || !collider.body) return;
 
-    // Bottom collider
-    let bottomCollider = new PIXI.Graphics();
-    bottomCollider.beginFill(0xff0000, 0.5);
-    let width0 = 1000;
-    let height0 = 50;
-    bottomCollider.drawRect(-width0 * 0.5, -height0 * 0.5, width0, height0);
-    bottomCollider.endFill();
-    this.moveablePlayground.addChild(bottomCollider);
-    bottomCollider.zIndex = 10;
-    bottomCollider.x = 0;
-    bottomCollider.y = 310;
-    bottomCollider.visible = this.physicsDebugEnabled;
-    bottomCollider.body = this.matter.rectangle(
-      bottomCollider.x,
-      bottomCollider.y,
-      width0,
-      height0,
-      {
-        isStatic: true,
-        collisionFilter: {
-          category: 0x0002,
-          mask: 0x0001,
-        },
+    // Update visual graphics
+    collider.clear();
+    collider.beginFill(0xff0000, 0.5);
+    collider.drawRect(-width * 0.5, -height * 0.5, width, height);
+    collider.endFill();
+    collider.x = x;
+    collider.y = y;
+    collider.rotation = angle;
+
+    // Remove old physics body
+    this.matter.removeBody(collider.body);
+
+    // Create new physics body with updated dimensions
+    collider.body = this.matter.rectangle(x, y, width, height, {
+      isStatic: true,
+      angle: angle,
+      collisionFilter: {
+        category: 0x0001,
+        mask: 0xffff,
       },
-    );
-    this.map3colliders.push(bottomCollider);
+    });
+  }
 
-    // Right wall collider
-    let rightCollider = new PIXI.Graphics();
-    rightCollider.beginFill(0xff0000, 0.5);
-    let width1 = 10;
-    let height1 = 800;
-    rightCollider.drawRect(-width1 * 0.5, -height1 * 0.5, width1, height1);
-    rightCollider.endFill();
-    this.moveablePlayground.addChild(rightCollider);
-    rightCollider.zIndex = 10;
-    rightCollider.x = 250;
-    rightCollider.y = 0;
-    rightCollider.visible = this.physicsDebugEnabled;
-    rightCollider.body = this.matter.rectangle(
-      rightCollider.x,
-      rightCollider.y,
-      width1,
-      height1,
-      { isStatic: true },
-    );
-    this.map3colliders.push(rightCollider);
+  /**
+   * Check and update colliders if data values changed
+   */
+  updateDynamicColliders() {
+    if (!this.colliderDynamicConfigs) return;
 
-    // Left wall collider
-    let leftCollider = new PIXI.Graphics();
-    leftCollider.beginFill(0xff0000, 0.5);
-    let width2 = 10;
-    let height2 = 800;
-    leftCollider.drawRect(-width2 * 0.5, -height2 * 0.5, width2, height2);
-    leftCollider.endFill();
-    this.moveablePlayground.addChild(leftCollider);
-    leftCollider.zIndex = 10;
-    leftCollider.x = -250;
-    leftCollider.y = 0;
-    leftCollider.visible = this.physicsDebugEnabled;
-    leftCollider.body = this.matter.rectangle(
-      leftCollider.x,
-      leftCollider.y,
-      width2,
-      height2,
-      { isStatic: true },
-    );
-    this.map3colliders.push(leftCollider);
+    for (let config of this.colliderDynamicConfigs) {
+      let needsUpdate = false;
+
+      // Check if any parameter changed
+      for (let i = 0; i < config.paramNames.length; i++) {
+        const newVal = data[config.paramNames[i]];
+        if (config.oldValues[i] !== newVal) {
+          config.oldValues[i] = newVal;
+          needsUpdate = true;
+        }
+      }
+
+      // Update collider if any value changed
+      if (needsUpdate) {
+        this.updateWallCollider(
+          config.collider,
+          config.oldValues[0], // x
+          config.oldValues[1], // y
+          config.oldValues[2], // width
+          config.oldValues[3], // height
+          config.oldValues[4], // angle
+        );
+      }
+    }
+  }
+
+  /**
+   * Check and update character collider if data values changed
+   */
+  updateDynamicCharacterCollider() {
+    if (!this.characterColliderDynamicConfig || !this.characterCollider) return;
+
+    const config = this.characterColliderDynamicConfig;
+    let needsUpdate = false;
+
+    // Check if any parameter changed
+    for (let i = 0; i < config.paramNames.length; i++) {
+      const newVal = data[config.paramNames[i]];
+      if (config.oldValues[i] !== newVal) {
+        config.oldValues[i] = newVal;
+        needsUpdate = true;
+      }
+    }
+
+    // Update character collider if any value changed
+    if (needsUpdate) {
+      const offsetX = config.oldValues[0];
+      const offsetY = config.oldValues[1];
+      const width = config.oldValues[2];
+      const height = config.oldValues[3];
+      const angle = config.oldValues[4];
+
+      // Update visual graphics
+      this.characterCollider.clear();
+      this.characterCollider.beginFill(0x00ff00, 0.3);
+      this.characterCollider.drawRect(
+        -width * 0.5,
+        -height * 0.5,
+        width,
+        height,
+      );
+      this.characterCollider.endFill();
+      this.characterCollider.x = offsetX;
+      this.characterCollider.y = offsetY;
+      this.characterCollider.rotation = angle;
+
+      // Update stored offsets for position sync
+      this.characterCollider.offsetX = offsetX;
+      this.characterCollider.offsetY = offsetY;
+
+      // Remove old physics body and create new one
+      if (this.characterCollider.body) {
+        this.matter.removeBody(this.characterCollider.body);
+      }
+
+      const worldX = this.character.x + offsetX;
+      const worldY = this.character.y + offsetY;
+
+      this.characterCollider.body = this.matter.rectangle(
+        worldX,
+        worldY,
+        width,
+        height,
+        {
+          isStatic: true,
+          angle: angle,
+          collisionFilter: {
+            category: 0x0001,
+            mask: 0xffff,
+          },
+        },
+      );
+    }
+  }
+
+  /**
+   * Check and update shield if data values changed
+   */
+  updateDynamicShield() {
+    if (!this.shieldDynamicConfig || !this.shield) return;
+
+    const config = this.shieldDynamicConfig;
+    let needsUpdate = false;
+
+    // Check if any parameter changed
+    for (let i = 0; i < config.paramNames.length; i++) {
+      const newVal = data[config.paramNames[i]];
+      if (config.oldValues[i] !== newVal) {
+        config.oldValues[i] = newVal;
+        needsUpdate = true;
+      }
+    }
+
+    // Update shield if any value changed
+    if (needsUpdate) {
+      this.shield.x = config.oldValues[0]; // positionX
+      this.shield.y = config.oldValues[1]; // positionY
+      this.shield.scale.set(config.oldValues[2]); // scale
+      this.shield.angle = config.oldValues[3]; // angle
+    }
   }
 
   // ============ UPDATE LOOP ============
@@ -922,6 +1538,18 @@ export default class PixiGame {
     if (this.matter) {
       this.matter.update(delta);
     }
+
+    // Update dynamic colliders from data changes
+    this.updateDynamicColliders();
+
+    // Update dynamic character collider from data changes
+    this.updateDynamicCharacterCollider();
+
+    // Update dynamic shield from data changes
+    this.updateDynamicShield();
+
+    // Update dynamic map assets from data changes
+    this.updateDynamicMapAssets();
 
     // Update character colliders - sync Matter.js bodies to follow character
     if (this.characterColliders) {
@@ -947,7 +1575,7 @@ export default class PixiGame {
         coin.rotation = coin.body.angle;
 
         // Remove coins that fall below y = 400
-        if (coin.y > 600) {
+        if (coin.y > 800) {
           this.removeCoin(coin);
         }
       });
