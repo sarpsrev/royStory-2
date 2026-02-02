@@ -1131,6 +1131,14 @@ export default class PixiGame {
           y: 0,
           duration: 0.3,
         });
+        // Remove character collider from scene
+        if (this.characterCollider) {
+          if (this.characterCollider.body) {
+            this.matter.removeBody(this.characterCollider.body);
+          }
+          this.characterCollider.destroy();
+          this.characterCollider = null;
+        }
       },
     });
 
