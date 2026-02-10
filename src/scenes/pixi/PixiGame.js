@@ -848,6 +848,7 @@ export default class PixiGame {
   addCharacter(x, y) {
     let gameObject;
     gameObject = new Spine(TextureCache['Roy'].spineData);
+    //  gameObject.stateData.defaultMix = 1;
     gameObject.scale.set(0.15);
     this.moveablePlayground.addChild(gameObject);
     gameObject.x = x;
@@ -925,7 +926,15 @@ export default class PixiGame {
       return;
     }
 
-    const validAnimations = ['idle', 'backPush', 'dead', 'frontPush', 'win'];
+    const validAnimations = [
+      'idle',
+      'backPush',
+      'lookFront',
+      'lookScreen',
+      'dead',
+      'frontPush',
+      'win',
+    ];
 
     if (!validAnimations.includes(animationName)) {
       console.warn(
@@ -1069,7 +1078,13 @@ export default class PixiGame {
 
     // Pause main movement first
     this.pauseCharacterMovement();
+    // Animation chain: idle → lookScreen → frontPush
+    // this.setCharacterAnimation('lookScreen', false);
+    // gsap.delayedCall(0.2, () => {
+    //   this.setCharacterAnimation('frontPush', false);
+    // });
     this.setCharacterAnimation('frontPush', false);
+
     AudioManager.playSFX('pushSound');
     AudioManager.stopSFX('royBg');
 
@@ -1083,7 +1098,13 @@ export default class PixiGame {
         this.isLunging = false;
         if (onComplete) onComplete();
         this.resumeCharacterMovement();
+        // // Animation chain: frontPush → lookFront → idle
+        //  this.setCharacterAnimation('lookFront', false);
+        gsap.delayedCall(0.2, () => {
+          //    this.setCharacterAnimation('idle', true);
+        });
         this.setCharacterAnimation('idle', true);
+
         AudioManager.playSFX('royBg', true);
       },
     });
