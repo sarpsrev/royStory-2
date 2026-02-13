@@ -306,7 +306,7 @@
             "label": "Game Duration",
             "description": "Adjusts how long the effect lasts",
             "aiDescription": "ai description",
-            "defaultValue": 30,
+            "defaultValue": 10,
             "min": 10,
             "max": 120,
             "step": 1
@@ -800,7 +800,7 @@
             "label": "Shield Position X",
             "description": "Adjusts the X-axis value",
             "aiDescription": "ai description",
-            "defaultValue": 460,
+            "defaultValue": 420,
             "min": -1000,
             "max": 1000,
             "step": 1

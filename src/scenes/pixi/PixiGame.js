@@ -997,6 +997,10 @@ export default class PixiGame {
         ? (remainingDistance / totalDistance) * data.totalDuration
         : 0;
 
+    // Calculate current overall progress (0 to 1)
+    const currentProgress =
+      totalDistance > 0 ? 1 - remainingDistance / totalDistance : 1;
+
     // Kill existing timeline if any
     if (this.characterTimeline) {
       this.characterTimeline.kill();
@@ -1011,6 +1015,18 @@ export default class PixiGame {
       y: data.targetY,
       duration: remainingDuration,
       ease: 'none',
+      onUpdate: () => {
+        // Calculate overall progress including already traveled distance
+        const tweenProgress = this.characterTimeline.progress();
+        const overallProgress =
+          currentProgress + (1 - currentProgress) * tweenProgress;
+
+        // Trigger backPush animation at 75% of total movement
+        if (overallProgress >= 0.75 && !data.backPushTriggered) {
+          data.backPushTriggered = true;
+          this.setCharacterAnimation('backPush', true);
+        }
+      },
       onComplete: () => {
         console.log('Character movement completed');
         this.setCharacterAnimation('dead', false);
@@ -1103,7 +1119,15 @@ export default class PixiGame {
         gsap.delayedCall(0.2, () => {
           //    this.setCharacterAnimation('idle', true);
         });
-        this.setCharacterAnimation('idle', true);
+        // Return to backPush if 75% threshold was reached, otherwise idle
+        if (
+          this.characterMovementData &&
+          this.characterMovementData.backPushTriggered
+        ) {
+          this.setCharacterAnimation('backPush', true);
+        } else {
+          this.setCharacterAnimation('idle', true);
+        }
 
         AudioManager.playSFX('royBg', true);
       },

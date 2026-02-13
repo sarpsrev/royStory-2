@@ -34,7 +34,7 @@ const data = window.gameData ?? {
   flatBgColor: 0x718c5f,
 
   // # GAMEPLAY CONFİNG
-  gameDuration: 30, // @slider: 10, 120, 1
+  gameDuration: 10, // @slider: 10, 120, 1
 
   // # COLLIDER CONFİNG
   debugPhysics: false,
@@ -84,7 +84,7 @@ const data = window.gameData ?? {
   // # MAP ASSET CONFİNG
   // ## SHIELD CONFİNG
   shieldSrc: null, // shield image source
-  shieldPositionX: 460, // @slider: -1000, 1000, 1
+  shieldPositionX: 420, // @slider: -1000, 1000, 1
   shieldPositionY: -550, // @slider: -1000, 1000, 1
   shieldScale: 4.5, // @slider: 0.1, 10, 0.01
   shieldAngle: -10, // @slider: -360, 360, 1
